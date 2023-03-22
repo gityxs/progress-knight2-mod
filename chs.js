@@ -1202,6 +1202,7 @@ var cnRegReplace = new Map([
     [/^Bargaining ([\d\.,]+)\/$/, '讨价还价 $1/'],
     [/^Bargaining ([\d\.,]+)\/([\d\.,]+), Blacksmith ([\d\.,]+)\/$/, '讨价还价 $1/$2，铁匠 $3/'],
     [/^Mana Control ([\d\.,]+)\/([\d\.,]+), Student ([\d\.,]+)\/$/, '法力控制 $1/$2，学生 $3/'],
+    [/^Mana Control ([\d\.,]+)\/([\d\.,]+), Veteran Knight ([\d\.,]+)\/$/, '法力控制 $1/$2，资深骑士 $3/'],
     [/^Mana Control ([\d\.,]+)\/([\d\.,]+), Master Wizard ([\d\.,]+)\/$/, '法力控制 $1/$2，大法师 $3/'],
     [/^Fisherman ([\d\.,]+)\/$/, '渔民 $1/'],
     [/^Beggar ([\d\.,]+)\/$/, '乞丐 $1/'],
