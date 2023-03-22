@@ -853,7 +853,7 @@ var cnItems = {
     "Starting a challenge will": "开始挑战将",
     "Steel Longsword": "钢长剑",
     "Stellar Neighborhood": "恒星社区",
-    "Sticky sidebar": "粘边栏",
+    "Sticky sidebar": "固定侧边栏",
     "Study Desk": "书桌",
     "Study the theory of mana and practice basic spells. There is minor pay to cover living costs; however, this is a necessary stage in becoming a mage.": "研究法力理论并练习基本法术。 支付生活费用的工资很少； 但是，这是成为法师的必经阶段。",
     "Supercluster": "超星系团",
