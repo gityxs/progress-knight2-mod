@@ -654,7 +654,7 @@ var cnItems = {
     "Challenge 5 Reward: Multiplies evil gain by x": "挑战 5 奖励：邪恶收益乘以 x",
     "Challenge rewards are always active, even in challenges.": "挑战奖励总是活跃的，即使是在挑战中。",
     "Challenges": "挑战",
-    "Changelog": "变更日志",
+    "Changelog": "更新日志",
     "Chronomancer": "时空术士",
     "City Ruler": "城市统治者",
     "class category along with": "类类别连同",
