@@ -935,7 +935,7 @@ var cnItems = {
     "Unlocks Dark Matter": "解锁暗物质",
     "Unlocks Dark Matter Skills": "解锁暗物质技能",
     "Automatically gain max levels": "自动获得最高等级",
-    "Automatically gain max levels at age": "在年龄自动获得最高等级",
+    "Automatically gain max levels at age": "自动获得最高等级当年龄达到",
     "Heroic jobs, skills and items are unlocked": "解锁英雄职业、技能和物品",
     "Makes Hell Portal even stronger": "让地狱传送门更强大",
     "Multiply Dark Matter gain by": "将暗物质增益乘以",
