@@ -662,7 +662,7 @@ var cnItems = {
     "Dark Matter:": "暗物质：",
     "Dark Milestones": "黑暗里程碑",
     "Dark Orb": "黑暗宝珠",
-    "Dark Orb Generator": "暗球发生器",
+    "Dark Orb Generator": "黑暗宝珠生成器",
     "Dark Orbiter": "黑暗轨道飞行器",
     "Dark Orbs": "黑暗宝珠",
     "Dark Orbs:": "黑暗宝珠：",
