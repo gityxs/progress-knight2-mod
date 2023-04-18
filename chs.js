@@ -629,7 +629,7 @@ var cnItems = {
     "Click to activate auto-buy": "点击激活自动购买",
     "collapse the universe": "宇宙崩溃",
     "Collapse the universe": "宇宙坍缩",
-    "Collapse the universe:": "折叠宇宙：",
+    "Collapse the universe:": "宇宙坍缩：",
     "Color Blind Friendly": "色盲友好",
     "Color scheme": "配色方案",
     "Commander of the Galactic Council grants you the privilege to automatically collect Essence from the nearby planets": "银河委员会指挥官授予您自动从附近行星收集精华的特权",
