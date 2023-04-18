@@ -5,7 +5,7 @@ class Task {
         this.level = 0
         this.maxLevel = 0
         this.xp = 0
-        this.xpBigInt = BigInt(0)
+        this.xpLog = -Infinity
         this.isHero = false
         this.isFinished = false
 
@@ -19,7 +19,7 @@ class Task {
             level: this.level,
             maxLevel: this.maxLevel,
             xp: this.xp,
-            xpBigInt: bigIntToExponential(this.xpBigInt),
+            xpLog: this.xpLog,
             isHero: this.isHero,
             isFinished: this.isFinished
         }
@@ -35,13 +35,20 @@ class Task {
         return maxXp
     }
 
-    getMaxBigIntXp() {
-        const maxXp = this.getMaxXp() == Infinity ? BigInt(1e305) : BigInt(Math.floor(this.getMaxXp()));
+    getMaxXpLog() {
+        const maxXp = this.getMaxXp() == Infinity ? 305 : Math.log10(this.getMaxXp());
 
-        if (maxXp < 1e305)
+        if (maxXp < 305)
             return maxXp
 
-        return maxXp * 2n ** (BigInt(this.level) / 120n) * (2n ** (BigInt(this.baseData.heroxp) / 9n))
+        // The scaling on this is real weird, but you've probably already balanced around it.
+        // The level cost and scaling jumps up at 305, then the cost drops a bit and the scaling plummets a bit later.
+        // Heroic and normal levels scale identically after the drop
+
+        // If you are willing to rebalance, the initial scaling extended would be: 
+        //  (this.isHero ? this.baseData.heroxp : 0) + (this.isHero ? 1.08 : 1.01) * this.level + Math.log10(this.baseData.maxXp*(this.level + 1))
+
+        return maxXp + Math.log10(2) * (this.level/120+this.baseData.heroxp/9)
     }
 
     getXpLeft() {
@@ -56,11 +63,11 @@ class Task {
         return (this.isHero ? getHeroXpGainMultipliers(this) : 1) * applyMultipliers(10, this.xpMultipliers)
     }
 
-    getXpGainBigInt() {
-        let xpGain = BigInt(Math.floor(this.isHero ? getHeroXpGainMultipliers(this) : 1))
+    getXpGainLog() {
+        let xpGain = this.isHero ? Math.log10(getHeroXpGainMultipliers(this)) : 0
 
         this.xpMultipliers.forEach(multiplier => {
-            xpGain *= BigInt(Math.ceil(multiplier()))
+            xpGain += Math.log10(multiplier())
         })
 
         return xpGain
@@ -68,37 +75,26 @@ class Task {
 
     getXpGainFormatted() {
         if (this.isFinished)
-            return bigIntToExponential(this.getXpGainBigInt())
+            return logToExponential(this.getXpGainLog())
         return format(this.getXpGain())
     }
 
     getXpLeftFormatted() {
         if (this.isFinished)
-            return bigIntToExponential(this.getMaxBigIntXp() - this.xpBigInt)
+            return logToExponential(subLogs(this.getMaxXpLog(), this.xpLog))
         return format(this.getXpLeft())
     }
 
     increaseXp() {
         if (this.isFinished) {
-            this.xpBigInt += applySpeedOnBigInt(this.getXpGainBigInt())
+            this.xpLog = addLogs(this.xpLog, applySpeedOnLog(this.getXpGainLog()))
 
-            if (this.xpBigInt >= this.getMaxBigIntXp()) {
-                let excess = this.xpBigInt - this.getMaxBigIntXp()
-
-                let iterations = 0
-                while (excess >= 0n) {
-                    iterations += 1
-
-                    // This amount is way lower because calculations with a BigInt are really expensive.
-                    // Probably want to look into more optimizations.
-                    if (iterations > 300)
-                        excess = -1n
-
-                    this.level += 1
-                    excess -= this.getMaxBigIntXp()
-                }
-                this.xpBigInt = this.getMaxBigIntXp() + excess
+            let curCost = -Infinity
+            for (let nextCost=this.getMaxXpLog(), iterations = 0;nextCost <= this.xpLog && iterations < 2500; nextCost=addLogs(curCost, this.getMaxXpLog()),iterations++) {
+                this.level += 1
+                curCost = nextCost
             }
+            this.xpLog = subLogs(this.xpLog, curCost)
         } else {
             this.xp += applySpeed(this.getXpGain())
 
