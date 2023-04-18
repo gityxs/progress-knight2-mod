@@ -1351,7 +1351,7 @@ function peekSettingFromSave(setting) {
     } catch (error) {
         console.error(error)
         console.log(localStorage.getItem("gameDataSave"))
-        alert("It looks like you tried to load a corrupted save... If this issue persists, feel free to contact the developers!")
+        alert("看起来你试图加载一个损坏的存档...如果这个问题仍然存在，请随时联系开发人员！")
     }
 }
 
@@ -1421,7 +1421,7 @@ function loadGameData() {
     } catch (error) {
         console.error(error)
         console.log(localStorage.getItem("gameDataSave"))
-        alert("It looks like you tried to load a corrupted save... If this issue persists, feel free to contact the developers!")
+        alert("看起来你试图加载一个损坏的存档...如果这个问题仍然存在，请随时联系开发人员！")
     }
 
     assignMethods()
@@ -1491,7 +1491,7 @@ function importGameData() {
     try {
         const importExportBox = document.getElementById("importExportBox")
         if (importExportBox.value == "") {
-            alert("It looks like you tried to load an empty save... Paste save data into the box, then click \"Import Save\" again.")
+            alert("看起来你试图加载一个空的保存...将保存数据粘贴到框中，然后再次单击“导入存档”。")
             return
         }
         const data = JSON.parse(window.atob(importExportBox.value))
@@ -1500,7 +1500,7 @@ function importGameData() {
         saveGameData()
         location.reload()
     } catch (error) {
-        alert("It looks like you tried to load a corrupted save... If this issue persists, feel free to contact the developers!")
+        alert("看起来你试图加载一个损坏的存档...如果这个问题仍然存在，请随时联系开发人员！")
     }
 }
 
