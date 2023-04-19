@@ -227,7 +227,7 @@ function getFormattedChallengeTaskGoal(taskName, level) {
         return "Great " + taskName + " lvl " + formatLevel(Math.ceil(level / 1000))
 }
 function addLogs(a,b){
-    return math.max(a,b) + Math.log10(1+.1**Math.abs(a-b))
+    return Math.max(a,b) + Math.log10(1+.1**Math.abs(a-b))
 }
 function subLogs(a,b){
     return a+Math.log10(1-.1**(a-b))

@@ -36,17 +36,16 @@ class Task {
     }
 
     getMaxXpLog() {
-        const maxXp = this.getMaxXp() == Infinity ? 305 : Math.log10(this.getMaxXp());
+        let maxXp = (this.isHero ? this.baseData.heroxp : 0) + Math.log10(this.baseData.maxXp*(this.level + 1))
+        maxXp += (this.isHero ? Math.log10(1.08) : Math.log10(1.01)) * this.level
 
         if (maxXp < 305)
             return maxXp
 
-        // The scaling on this is real weird, but you've probably already balanced around it.
-        // The level cost and scaling jumps up at 305, then the cost drops a bit and the scaling plummets a bit later.
-        // Heroic and normal levels scale identically after the drop
-
-        // If you are willing to rebalance, the initial scaling extended would be: 
-        //  (this.isHero ? this.baseData.heroxp : 0) + (this.isHero ? 1.08 : 1.01) * this.level + Math.log10(this.baseData.maxXp*(this.level + 1))
+        //Odd bit of balance, but I'm maintaining the original.
+        //This reduces the scaling a Lot at some point, and treats unheroic as heroic after that point
+        if(maxXp>308.254715) // ~Infinity
+            maxXp = 305;
 
         return maxXp + Math.log10(2) * (this.level/120+this.baseData.heroxp/9)
     }
