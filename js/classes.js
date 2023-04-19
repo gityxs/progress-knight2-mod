@@ -89,12 +89,14 @@ class Task {
         if (this.isFinished) {
             this.xpLog = addLogs(this.xpLog, applySpeedOnLog(this.getXpGainLog()))
 
-            let curCost = -Infinity
-            for (let nextCost=this.getMaxXpLog(), iterations = 0;nextCost <= this.xpLog && iterations < 2500; nextCost=addLogs(curCost, this.getMaxXpLog()),iterations++) {
+            let excess = this.xpLog
+            let nextCost=this.getMaxXpLog()
+            for (let iterations = 0;excess >= nextCost && iterations < 2500; iterations++) {
                 this.level += 1
-                curCost = nextCost
+                excess = subLogs(excess, nextCost)
+                nextCost=this.getMaxXpLog()
             }
-            this.xpLog = subLogs(this.xpLog, curCost)
+            this.xpLog = excess
         } else {
             this.xp += applySpeed(this.getXpGain())
 
