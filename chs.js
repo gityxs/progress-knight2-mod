@@ -851,7 +851,7 @@ var cnItems = {
     "Transcend will only appear if you have the": "只有当你有",
     "Transcend:": "超越：",
     "Transcendent Master": "超凡大师",
-    "Try to upgrade One Above All to level": "尝试升级至高无上的水平",
+    "Try to upgrade One Above All to level": "尝试升级至高无上的等级",
     "Under the supervision of a skilled mage, perform basic spells against enemies in battle. Generous pay will be provided to cover living costs.": "在熟练的法师的监督下，在战斗中对敌人施展基本法术。 将提供丰厚的报酬以支付生活费用。",
     "Universal Ruler": "万能尺",
     "Universe Fragment": "宇宙碎片",
