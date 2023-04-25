@@ -3,7 +3,7 @@
 .w3-button, .w3-bar-item {
     padding: 0.4em 0.8em;
 }
- 
+
 .w3-margin {
     margin: 0.8em !important
 }
@@ -41,10 +41,6 @@
     height: 2em;
     padding: 0 0 0 0;
     padding-left: 0.8em;
-}
-
-.w3-button:hover {
-    background-color: rgb(204, 204, 204) !important;
 }
 
 .w3-table td:first-child, .w3-table th:first-child {
@@ -204,6 +200,13 @@ button:focus {
     padding-bottom: 0.4em;
     margin-bottom: 0.4em;
 }
+
+.metaverse-title {
+    color: rgb(24, 210, 217);
+    border-bottom: 0.1em solid rgb(24, 210, 217);
+    padding-bottom: 0.4em;
+    margin-bottom: 0.4em;
+}
   
 .tooltip .tooltipText {
     visibility: hidden;
@@ -333,7 +336,7 @@ button:focus {
     margin-bottom: 4em;
 }
 
-.settings-tab-column {
+.page-column {
     width: 56em;
     height: auto;
 }
@@ -378,4 +381,122 @@ button:focus {
 .reward {
     color: rgb(64, 237, 23);
     padding-bottom: 0.5em;
+}
+
+.perk {
+    background-color: #EA4C89;
+    border-style: solid;
+    border-width: 0.1em;
+    box-sizing: border-box;
+    color: #FFFFFF;
+    cursor: pointer;
+    display: inline-block;
+    font-size: larger;
+    height: 4em;
+    line-height: 1.5em;
+    list-style: none;
+    margin: 0;
+    outline: none;
+    padding: 0.5em 0.5em;
+    position: relative;
+    text-align: center;
+    text-decoration: none;
+    transition: color 100ms;
+    vertical-align: baseline;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    margin: 0.6em 0.7em 0.6em 0.7em;    
+}
+
+.perk:hover {
+    background-color: #F082AC;
+}
+
+.perk-grid {
+    display: grid;
+    grid-template-columns: 27em 27em
+}
+
+.active-perk {
+    background-color: green;
+}
+
+.active-perk:hover {
+    background-color: #02bb11;
+}
+
+.perk-tool {
+    background-color: #066182;
+    height: 2.5em;
+}
+
+.perk-tool:hover {
+    background-color: #0691c3;
+}
+
+.perk-locked, .perk-locked:hover{
+    background-color: #3e3e3e;
+}
+
+.color-happiness {
+    color: rgb(15, 105, 207);
+}
+.color-evil {
+    color: rgb(240, 0, 0);
+}
+.color-essence {
+    color: rgb(24, 210, 217);
+}
+.color-dark-mater {
+    color: rgb(132, 99, 206);
+}
+.color-dark-orbs {
+    color: rgb(143, 114, 207);
+}
+.color-time-warping {
+    color: rgb(204, 34, 219);
+}
+.color-hypercubes {
+    color: rgb(9, 160, 230);
+}
+.color-perk-points {
+    color: rgb(217, 24, 119);
+}
+.color-income {
+    color: lightgreen;
+}
+
+.perk-boost {
+    margin: 0;
+    padding: 0.2em 0.5em 1em 0.5em;
+    height: 2em;
+}
+
+.perk-boost-cooldown, .perk-boost-cooldown:hover {
+    background-color: #066182;
+}
+
+.perk-boost-active, .perk-boost-active:hover {
+    background-color: #02bb11;
+}
+
+.button-transcend {
+    background-color: #b8f4cb !important;
+}
+
+.button-transcend:hover {
+    background-color: #cef5da !important;   
+}
+
+.button-evil {
+    background-color: #f0b5b5 !important;
+}
+
+.button-evil:hover {
+    background-color: #f2caca !important;
+}
+
+.rowtitle {
+    padding: 0.3em 1em 0em 1em !important;
 }

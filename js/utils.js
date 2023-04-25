@@ -141,7 +141,7 @@ function formatTime(sec_num, show_ms = false) {
     if (hours < 10) hours = "0" + hours
     if (minutes < 10) minutes = "0" + minutes
     if (seconds < 10) seconds = "0" + seconds
-    return hours + ':' + minutes + ':' + seconds + mss
+    return (sec_num > 3600 ? hours + ':' : "") + minutes + ':' + seconds + mss
 }
 
 function formatTreshold(number, decimals = 1, treshold = 100000) {
@@ -239,4 +239,9 @@ function getFormattedChallengeTaskGoal(taskName, level) {
         return taskName + " lvl " + formatLevel(level)
     else
         return "Great " + taskName + " lvl " + formatLevel(Math.ceil(level / 1000))
+}
+
+function getFormattedTitle(parameter) {
+    const Title = parameter.replaceAll("_", " ")
+    return Title.charAt(0).toUpperCase() + Title.slice(1)
 }
