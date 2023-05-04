@@ -1,6 +1,31 @@
+version 2.3.2 / 30.04.2023
+* Fix a few small bugs
+* Add a few small quality of life improvements
+
+version 2.3.1 / 25.04.2023
+* Fix a few small bugs
+* Add a setting to enable dangerous keybinds, which is disabled by default
+* Improve the performance
+
+version 2.3 / 24.04.2023
+* Added Metaverse
+* New Items, Jobs, Milestones
+* Added keyboard shortcuts for Challenges and Rebirths
+* Added 1 new challenge and 1 new Dark skill
+* UI improvements
+* Reverted some changes from 2.2.11 update
+* Buffed last Dark Milestones
+* Increased load stability of saves
+* Requirement rows now show the next effect if is is unlocked
+* Dark Matter and Dark skills tabs combined in W I D E layout
+* and more small fixes and improvements
+
+version 2.2.11 / 19.04.2023
+* Make the last milestones achievable.
+
 version 2.2.10 / 16.04.2023
 * Some effect names have been renamed to maintain consistency
-* Improved Dark matter shop and skills UI
+* Improved Dark Matter shop and skills UI
 * Minor UI improvements
 
 version 2.2.9.2 / 18.02.2023

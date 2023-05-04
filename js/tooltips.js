@@ -44,6 +44,12 @@ const tooltips = {
     "Acallaris": "Primordial being that predate the universe, involved with the creation of life and powerful beyond mortal comprehension, existing as myths to the oldest species in the universe.",
     "One Above All": "Creator of everything.",
 
+    // Metaverse Guards
+    "Snow Crash": "Snow Crash, 1992",
+    "Player One": "Ready Player One, 2011",
+    "Lost in the dark": "They both knew they would only go forward when next to each other. They vowed that they would always be together, earn a lot of money and move to a better place where they would be very happy.",
+    "Omega": "ω",
+
     // Fundamentals
     "Concentration": "Improve your learning speed through practising intense concentration activities.",
     "Productivity": "Learn to procrastinate less at work and receive more job experience per day.",
@@ -130,6 +136,9 @@ const tooltips = {
     "Supercluster": "A cluster of galactic groups spanning hundreds of millions of light years across and containing thousands of galaxies is under your control.",
     "Galaxy Filament": "One of the largest known structures of the universe, containing dozens of superclusters and millions of galaxies.",
     "Observable Universe": "You did it! You finally rule the entire universe...or do you?",
+    "Multiverse": "Universe is too small for you?!",
+    "Quantum World": "You try to find at least some place that is still beyond your control, but all in vain.",
+    "Boötes Void": "The Great Nothing",
 
     // Misc
     "Book": "A place to write down all your thoughts and discoveries, allowing you to learn a lot more quickly.",
@@ -143,7 +152,7 @@ const tooltips = {
     "Observatory": "Used for observing terrestrial, marine and celestial events.",
     "Mind's Eye": "Lets you see memories, remember images, and even see new pictures and ideas.",
     "Void Necklace": "Helps you shape and manipulate void matter, even transmute and rebuild it into anything of your choosing.",
-    "Void Armor": "Generates an innate armor as a part of you body, which is resistant to attacks, harm or pain.",
+    "Void Armor": "Generates an innate armor as a part of your body, which is resistant to attacks, harm or pain.",
     "Void Blade": "Forged from void dust and dark matter, this blade can slash through dimensional barriers. It's a weapon of choice for every Void Reaver.",
     "Void Orb": "When the orb touches non void entities, it instantly disintegrates them by harnessing its power from Void realm.",
     "Void Dust": "Purest version of void created material; a teaspoon of it is as heavy as a small planet.",
@@ -152,6 +161,10 @@ const tooltips = {
     "Multiverse Fragment": "Came into existance long before our universe was created, this strange looking object with no shape radiates unlimited energy.",
     "Stairway to heaven": "A staircase to the all mighty themselves.",
     "Highway to hell": "The devil invites you to his palace of terror.",
+    "Tesseract": "This object is from a higher dimensional world.",
+    "Desintegration": "Why do you need it?",
+    "Custom Galaxy": "You know about the pocket dimension, right?",
+    "Hypersphere": "You gain the limitless pow... ah, you're already omnipotent...",
 
     // Essence Milestones
     "Magic Eye": "The Eye in your Amulet starts to glow.",
@@ -189,9 +202,16 @@ const tooltips = {
     "Dark Matter Mining": "Mine a huge amount of Dark Matter from each planet you visit.",
     "The new gold": "Essence might become the new gold due to mass adoption.",
     "The Devil inside you": "Shady deals with the Devil grant you a huge Evil bonus.",
-    "Strange Magic": "A strange wizard offers you a few secret spells which might be usefull.",
+    "Strange Magic": "A strange wizard offers you a few secret spells which might be useful.",
     "Life is valueable": "Time is limited... Even as the ruler of the universe.",
     "Speed speed speed": "You can affect the speed of the universe with your gigantic amount of Dark Matter.",
     "Dark Matter Millionaire": "This secret spell will help you reach your quest to become the first Dark Matter millionaire.",
-    "The new Dark Matter": "",
+    "The new Dark Matter": "Your amulet tears space and time through all multiverses. Welcome to Metaverse.",
+
+    "Strong Hope": "Another Faint Hope buff?!",
+    "Ruler of the Metaverse": "Now you are thinking with portals",
+    "A New Hope": "No more of this Faint Hope nonsense!!!",
+    "Time is a flat circle": "This is a world where nothing is solved. Someone once told me, time is a flat circle. Everything we’ve ever done or will do, we’re gonna do over and over and over again.",
+    "The End is near": "We don't try to live forever",
+    "The End": "The End",
 }
