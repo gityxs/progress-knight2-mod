@@ -318,11 +318,15 @@ function applyUnpausedSpeed(value) {
     return value * getUnpausedGameSpeed() / updateSpeed
 }
 
-function applySpeedOnLog(value) {
-    return value + Math.log10(getGameSpeed()/updateSpeed)
+function applySpeedOnBigInt(value) {
+    if (value == 0n)
+        return 0n
+    return value * BigInt(Math.floor(getGameSpeed())) / BigInt(Math.floor(updateSpeed))
 }
 
 function getEvilGain() {
+
+
     const evilControl = gameData.taskData["Evil Control"]
     const bloodMeditation = gameData.taskData["Blood Meditation"]
     const absoluteWish = gameData.taskData ["Absolute Wish"]
@@ -907,7 +911,7 @@ function rebirthReset(set_tab_to_jobs = true) {
         if (task.level > task.maxLevel) task.maxLevel = task.level
         task.level = 0
         task.xp = 0
-        task.xpLog = -Infinity
+        task.xpBigInt = BigInt(0)
         task.isHero = false
         task.isFinished =false
     }
@@ -1030,14 +1034,6 @@ function makeHeroes() {
 function assignMethods() {
     for (const key in gameData.taskData) {
         let task = gameData.taskData[key]
-
-        if (!('xpLog' in task) && ('xpBigInt' in task)){
-            if (typeof task.xpBigInt === "string" && task.xpBigInt.includes("e"))
-                task.xpBigInt = exponentialToRawNumberString(task.xpBigInt)
-
-            task.xpLog = task.xpBigInt.length + Math.log10("0." + task.xpBigInt.substring(0, 15)) // This line from StackOverflow
-        }
-
         if (task.baseData.income) {
             task.baseData = jobBaseData[task.name]
             task = Object.assign(new Job(jobBaseData[task.name]), task)
@@ -1046,6 +1042,12 @@ function assignMethods() {
             task.baseData = skillBaseData[task.name]
             task = Object.assign(new Skill(skillBaseData[task.name]), task)
         }
+
+        // There are two cases. The number is stored as a large number or in the scientific notation.
+        if (typeof task.xpBigInt === "string" && task.xpBigInt.includes("e"))
+            task.xpBigInt = BigInt(exponentialToRawNumberString(task.xpBigInt))
+        else
+            task.xpBigInt = BigInt(task.xpBigInt)
 
         gameData.taskData[key] = task
     }
