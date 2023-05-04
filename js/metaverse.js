@@ -13,7 +13,7 @@ function getNextPowerOfNumber(number, add_power = 0) {
 }
 
 function getTimeTillNextHypercubePower(add_power = 0) {
-    return (getNextPowerOfNumber(gameData.hypercubes, add_power) - gameData.hypercubes) / (applySpeed(getHypercubeGeneration()) * updateSpeed)
+    return (getNextPowerOfNumber(gameData.hypercubes, add_power) - gameData.hypercubes) / (applyUnpausedSpeed(getHypercubeGeneration()) * updateSpeed)
 }
 
 function getBoostTimeSeconds() {
@@ -136,7 +136,7 @@ function canBuyChallengeAltar() {
 
 function buyChallengeAltar() {
     if (canBuyChallengeAltar()) {
-        gameData.hypercubes -= essenceMultCost()
+        gameData.hypercubes -= challengeAltarCost()
         gameData.metaverse.challenge_altar = 1
     }
 }
@@ -270,7 +270,7 @@ function getUnspentPerksDarkmatterGainBuff() {
 }
 
 function getHypercubeCap(next = 0) {
-    if (getTotalPerkPoints() >= 1)
+    if (getTotalPerkPoints() >= 1 || (next > 0 && getMetaversePerkPointsGain() > 0))
         return Infinity
 
     return 1e7 * Math.pow(10, (gameData.rebirthFiveCount + next) * 3)
