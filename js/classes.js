@@ -5,7 +5,7 @@ class Task {
         this.level = 0
         this.maxLevel = 0
         this.xp = 0
-        this.xpBigInt = BigInt(0)
+        this.xpLog = -Infinity
         this.isHero = false
         this.isFinished = false
         this.unlocked = false
@@ -22,7 +22,7 @@ class Task {
             level: this.level,
             maxLevel: this.maxLevel,
             xp: this.xp,
-            xpBigInt: bigIntToExponential(this.xpBigInt),
+            xpLog: this.xpLog,
             isHero: this.isHero,
             isFinished: this.isFinished,
             unlocked: this.unlocked
@@ -39,13 +39,19 @@ class Task {
         return maxXp
     }
 
-    getMaxBigIntXp() {
-        const maxXp = this.getMaxXp() == Infinity ? BigInt(1e305) : BigInt(Math.floor(this.getMaxXp()));
+    getMaxXpLog() {
+        let maxXp = (this.isHero ? this.baseData.heroxp : 0) + Math.log10(this.baseData.maxXp*(this.level + 1))
+        maxXp += (this.isHero ? Math.log10(1.08) : Math.log10(1.01)) * this.level
 
-        if (maxXp < 1e305)
+        if (maxXp < 305)
             return maxXp
 
-        return maxXp * 2n ** (BigInt(this.level) / 120n) * (2n ** (BigInt(this.baseData.heroxp) / 9n))
+        //Odd bit of balance, but I'm maintaining the original.
+        //This reduces the scaling a Lot at some point, and treats unheroic as heroic after that point
+        if(maxXp>308.254715) // ~Infinity
+            maxXp = 305;
+
+        return maxXp + Math.log10(2) * (this.level/120+this.baseData.heroxp/9)
     }
 
     getXpLeft() {
@@ -67,11 +73,11 @@ class Task {
         return (this.isHero ? getHeroXpGainMultipliers(this) : 1) * applyMultipliers(10, this.xpMultipliers)
     }
 
-    getXpGainBigInt() {
-        let xpGain = BigInt(Math.floor(this.isHero ? getHeroXpGainMultipliers(this) : 1))
+    getXpGainLog() {
+        let xpGain = this.isHero ? Math.log10(getHeroXpGainMultipliers(this)) : 0
 
         this.xpMultipliers.forEach(multiplier => {
-            xpGain *= BigInt(Math.ceil(multiplier()))
+            xpGain += Math.log10(multiplier())
         })
 
         return xpGain
@@ -79,38 +85,29 @@ class Task {
 
     getXpGainFormatted() {
         if (this.isFinished)
-            return bigIntToExponential(this.getXpGainBigInt())
+            return logToExponential(this.getXpGainLog())
         return format(this.getXpGain())
     }
 
     getXpLeftFormatted() {
         if (this.isFinished)
-            return bigIntToExponential(this.getMaxBigIntXp() - this.xpBigInt)
+            return logToExponential(subLogs(this.getMaxXpLog(), this.xpLog))
         return format(this.getXpLeft())
     }
 
     increaseXp() {
         if (this.isFinished) {
-            this.xpBigInt += applySpeedOnBigInt(this.getXpGainBigInt())
+            this.xpLog = addLogs(this.xpLog, applySpeedOnLog(this.getXpGainLog()))
 
-            if (this.xpBigInt >= this.getMaxBigIntXp()) {
-                let excess = this.xpBigInt - this.getMaxBigIntXp()
-
-                let iterations = 0
-                while (excess >= 0n) {
-                    iterations += 1
-
-                    // This amount is way lower because calculations with a BigInt are really expensive.
-                    // Probably want to look into more optimizations.
-                    if (iterations > 300)
-                        excess = -1n
-
-                    this.level += 1
-                    this.unlocked = true
-                    excess -= this.getMaxBigIntXp()
-                }
-                this.xpBigInt = this.getMaxBigIntXp() + excess
+            let excess = this.xpLog
+            let nextCost=this.getMaxXpLog()
+            for (let iterations = 0;excess >= nextCost && iterations < 2500; iterations++) {
+                this.level += 1
+                this.unlocked = true
+                excess = subLogs(excess, nextCost)
+                nextCost=this.getMaxXpLog()
             }
+            this.xpLog = excess
         } else {
             this.xp += applySpeed(this.getXpGain())
 
