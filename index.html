@@ -156,9 +156,9 @@
 								<th class="rowtitle category" style="width: 20em">Job</th>
 								<th class="rowtitle">Level</th>
 								<th class="rowtitle valueType" style="width: 18em">Value type</th>
-								<th class="rowtitle">XP/d</th>
+								<th class="rowtitle">XP/day</th>
 								<th class="rowtitle">XP&nbsp;left</th>
-								<th class="rowtitle maxLevel">Maxlvl</th>
+								<th class="rowtitle maxLevel">Max lvl</th>
 							</tr>
 						</template>
 						<template class="rowTaskTemplate">
@@ -241,7 +241,7 @@
 							</tr>
 						</template>
 						<template class="requiredRowTemplate">
-							<td style="padding-left: 0.8em;" colspan=5>
+							<td style="padding-left: 0.8em;padding-top: 0.2rem;" colspan=5>
 								<span class="w3-text-gray">Required:</span>
 								<div class="value" colspan=5 style="display:inline">
 									<span class="levels color-income"></span>
@@ -338,14 +338,14 @@
 									</div>
 									<div id="legendsNeverDieChallenge" style="padding-top:2em">
 										<div class="text-caption challenge-title">5. Legends never die</div>
-										<div style="color: gray; padding-bottom: 0.3em">Reduces your lifespan by ^0.72, happiness does nothing and Dark Magic XP effect is always 1x. <span id="challenge5MetaverseLifespanDebuff">The "Lifespan is now Infinity" buff from Metaverse is disabled.</span></div>
+										<div style="color: gray; padding-bottom: 0.3em">Reduces your lifespan by ^0.72, time warping by ^0.75, happiness does nothing and Dark Magic XP effect is always 1x. <span id="challenge5MetaverseLifespanDebuff">The "Lifespan is now Infinity" buff from Metaverse is disabled.</span></div>
 										<div style="color: gold; padding-bottom: 0.3em">Goal: Reach <span id="challengeGoal5">Chairman lvl 1227</span></div>
 										<div id="challengeReward5" class="reward">Reward: Multiplies <span class="color-evil">Evil</span> gain by x<span id="challengeEvilGainBuff">1</span></div>
 										<button id="challengeButton5" class="w3-button button" onclick="enterChallenge('legends_never_die')">Enter challenge</button>
 									</div>
 									<div id="theDarkestTimeChallenge" style="padding-top:2em">
 										<div class="text-caption challenge-title">6. The darkest time</div>
-										<div style="color: gray; padding-bottom: 0.3em">All previous challenges combined. Dark Matter items are disabled. First 4 Dark Matter skills grant all debuffs and no positive effects. Income is 0.</div>
+										<div style="color: gray; padding-bottom: 0.3em">All previous challenges combined. Dark Matter items are disabled. First 4 Dark Matter abilities grant all debuffs and no positive effects. Income is 0.</div>
 										<div style="color: gold; padding-bottom: 0.3em">Goal: Reach <span id="challengeGoal6">Chairman lvl 1227</span></div>
 										<div id="challengeReward6" class="reward">Reward: Multiplies <span class="color-dark-matter">Dark Matter</span> gain by x<span id="challengeDarkMatterGainBuff">1</span></div>
 										<button id="challengeButton6" class="w3-button button" onclick="enterChallenge('the_darkest_time')">Enter challenge</button>
@@ -493,7 +493,7 @@
 					<div class="tab column" style="display:none" id="darkMatter">
 						<div id="tabcolumnDarkMater" class="panel w3-margin-left" style="display: flex">
 							<div class="w3-button w3-bar-item tabButtonDarkMatter baritem w3-blue-gray" id="shopTabTabButton" onClick="setTabDarkMatter('shopTab')">Shop</div>
-							<div class="w3-button w3-bar-item tabButtonDarkMatter baritem" id="skillTreeTabTabButton" onClick="setTabDarkMatter('skillTreeTab')">Skills</div>
+							<div class="w3-button w3-bar-item tabButtonDarkMatter baritem" id="skillTreeTabTabButton" onClick="setTabDarkMatter('skillTreeTab')">Abilities</div>
 						</div>
 						<div id="maincolumnDarkMatter" class="panel w3-margin-left w3-margin-top">
 							<div id="shopTab" class="tabDarkMatter">
@@ -549,9 +549,9 @@
 									</div>
 									<div style="padding-top:2em">
 										<div style="color:gray; padding-bottom:0.3em">
-											You can only choose 1 upgrade in each category; pick wisely. You can reset the skills, but you will <b>NOT</b> get your <span class="color-dark-matter">Dark Matter</span> back!
+											You can only choose 1 upgrade in each category; pick wisely. You can reset the abilities, but you will <b>NOT</b> get your <span class="color-dark-matter">Dark Matter</span> back!
 										</div>
-										<button class="w3-button button" onclick="resetSkillTree()">Reset Skills</button>
+										<button class="w3-button button" onclick="resetSkillTree()">Reset Abilities</button>
 									</div>
 									<div style="padding-top:2em">
 										<div class="text-caption dark-matter-title">Speed is life</div>
@@ -664,7 +664,7 @@
 										<div class="text-caption"><span class="color-essence"><b>Welcome to Metaverse!</b></span></div>
 									</div>
 									<div style="padding-top:1em">
-										<div class="text-caption">Lifespan is now Infinity.</div>
+										<div class="text-caption">Lifespan is now infinite.</div>
 										<div class="text-caption">The more hypercubes you have, the more sacrifice opportunities will open up.</div>
 									</div>
 									<div style="border-bottom: 0.1em solid rgb(24, 210, 217); padding-top: 2em;"></div>
@@ -768,7 +768,7 @@
 												<button class="w3-button button" onClick="importGameData()">Import save</button>
 												<button class="w3-button button" onClick="exportGameData()" onmouseout="outExportButton()">Export save</button><span class="tooltiptext" id="exportTooltip"></span>
 												<form style="margin-top: 0.8em" autocomplete="off">
-													<input id="importExportBox" type="text" style="width:20em">
+													<input id="importExportBox" placeholder="Enter save here" type="text" style="width:20em">
 												</form>
 											</div>
 										</li>
@@ -856,7 +856,7 @@
 											</div>
 										</li>
 									</ul>
-									<span id="version" style="font-size:smaller; float:right" class="w3-text-gray">Version: 2.3.2</span>
+									<span id="version" style="font-size:smaller; float:right" class="w3-text-gray">Version: 2.3.3</span>
 								</div>
 							</div>
 							<div id="statsTab" class="tabSettings">

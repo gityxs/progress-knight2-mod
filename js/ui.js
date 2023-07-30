@@ -163,13 +163,19 @@ function renderSideBar() {
     // Hide the rebirthOneButton from the sidebar when you have `Almighty Eye` unlocked.
     document.getElementById("rebirthButton1").hidden = gameData.requirements["Almighty Eye"].isCompleted()
 
-    // Challenges
-    document.getElementById("challengeName").textContent = getFormattedTitle(gameData.active_challenge)
+    // Change sidebar when paused
+    if (gameData.paused) {
+        document.getElementById("info").classList.add("game-paused")
+    } else {
+        document.getElementById("info").classList.remove("game-paused")
+    }
 
+    // Challenges
     if (gameData.active_challenge == "") {
         document.getElementById("challengeTitle").hidden = true
         document.getElementById("info").classList.remove("challenge")
     } else {
+        document.getElementById("challengeName").textContent = getFormattedTitle(gameData.active_challenge)
         document.getElementById("challengeTitle").hidden = false
         document.getElementById("info").classList.add("challenge")
         // challenge reward

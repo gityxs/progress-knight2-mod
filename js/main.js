@@ -407,7 +407,13 @@ function getUnpausedGameSpeed() {
 
     const gameSpeed = baseGameSpeed * timeWarpingSpeed * getChallengeBonus("time_does_not_fly") * getGottaBeFastGain() * getDarkMatterSkillTimeWarping() 
 
-    return (gameData.active_challenge == "time_does_not_fly" || gameData.active_challenge == "the_darkest_time") ? Math.pow(gameSpeed, 0.7) : gameSpeed
+    if (gameData.active_challenge == "time_does_not_fly" || gameData.active_challenge == "the_darkest_time")
+        return Math.pow(gameSpeed, 0.7)
+
+    if (gameData.active_challenge == "legends_never_die")
+        return Math.pow(gameSpeed, 0.75)
+
+    return gameSpeed
 }
 
 function applyExpenses() {
