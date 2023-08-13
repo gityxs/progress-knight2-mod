@@ -556,7 +556,7 @@ function renderPerks() {
             const perk_cost = getPerkCost(key)
 
             if (total_mpp >= perk_cost) {
-                button.getElementsByClassName("perkName")[0].textContent = getFormattedTitle(key)
+                button.getElementsByClassName("perkName")[0].textContent = getMetaversePerkName(key)
                 button.classList.remove("perk-locked")
             }
             else {
@@ -1252,7 +1252,7 @@ function createPerks(perkLayoutName) {
 
 function createPerk(template, name) {
     const button = template[0].content.firstElementChild.cloneNode(true)
-    button.getElementsByClassName("perkName")[0].textContent = getFormattedTitle(name)
+    button.getElementsByClassName("perkName")[0].textContent = getMetaversePerkName(name)
     button.getElementsByClassName("perkCost")[0].textContent = getPerkCost(name)
     button.id = "id" + removeSpaces(removeStrangeCharacters(name))
     button.onclick = () => { buyPerk(name) }    

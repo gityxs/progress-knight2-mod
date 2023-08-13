@@ -179,16 +179,39 @@ const perks_cost = {
     instant_evil: 2,
     hypercube_boost: 5,
     instant_essence: 10,
-    save_challenges: 15,   
+    save_challenges: 15,
     instant_dark_matter: 25,
-    auto_sacrifice: 40,    
+    auto_sacrifice: 40,
     double_perk_points_gain: 50,
-    positive_dark_mater_skills: 100,   
-    hyper_speed: 200,   
+    positive_dark_mater_skills: 100,
+    hyper_speed: 200,
     both_dark_mater_skills: 300,
     keep_dark_mater_skills: 500,
     evil_booster: 2500,
     more_perk_points: 5000,
+}
+
+const perk_names = {
+    auto_dark_orb: "Auto buy dark orb generators",
+    auto_dark_shop: "Auto buy dark shop items",
+    auto_boost: "Auto boost",
+    instant_evil: "Instant evil",
+    hypercube_boost: "Hypercube boost",
+    instant_essence: "Instant essence",
+    save_challenges: "Save challenges",
+    instant_dark_matter: "Instant dark matter",
+    auto_sacrifice: "Auto sacrifice",
+    double_perk_points_gain: "2x perk points gain",
+    positive_dark_mater_skills: "Only positive dark matter abilities",
+    hyper_speed: "Hyper speed",
+    both_dark_mater_skills: "Pick both dark matter abilities",
+    keep_dark_mater_skills: "keep dark matter abilities",
+    evil_booster: "Evil booster",
+    more_perk_points: "10x perk points gain",
+}
+
+function getMetaversePerkName(perkName) {    
+    return perk_names[perkName]
 }
 
 function getPerkCost(perkName) {
