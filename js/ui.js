@@ -609,7 +609,7 @@ function renderDarkMatter() {
     renderDarkMatterShopButton("gottaBeFastBuyButton", canBuyGottaBeFast())
     renderDarkMatterShopButton("lifeCoachBuyButton", canBuyLifeCoach())
 
-    // Dark Matter Skill tree
+    // Dark Matter Ability tree
     renderSkillTreeButton(document.getElementById("speedIsLife1"), gameData.dark_matter_shop.speed_is_life != 0, [1, 3].includes(gameData.dark_matter_shop.speed_is_life), gameData.dark_matter >= 100)
     renderSkillTreeButton(document.getElementById("speedIsLife2"), gameData.dark_matter_shop.speed_is_life != 0, [2, 3].includes(gameData.dark_matter_shop.speed_is_life), gameData.dark_matter >= 100)
 
@@ -1028,7 +1028,7 @@ function setLayout(id) {
         setTabDarkMatter("shopTab")
 
         document.getElementById("maincolumnDarkMatter").classList.remove("settings-main-column")
-        document.getElementById("skillTreePageDarkMaterTitle").textContent = "Dark Matter Skills "
+        document.getElementById("skillTreePageDarkMaterTitle").textContent = "Dark Matter Abilities "
     }
     else {
         document.getElementById("tabcolumnDarkMater").classList.remove("hidden")
