@@ -1319,28 +1319,23 @@ window.addEventListener('keydown', function (e) {
             return
 
         if (e.key == "q") {
-            if (gameData.requirements["Rebirth button 1"].isCompleted())
-                rebirthOne()
+            rebirthOne()
         }
 
         if (e.key == "e") {
-            if (gameData.requirements["Rebirth button 2"].isCompleted())
-                rebirthTwo()
+            rebirthTwo()
         }
 
         if (e.key == "t") {
-            if (gameData.requirements["Rebirth button 3"].isCompleted())
-                rebirthThree()
+            rebirthThree()
         }
 
         if (e.key == "u") {
-            if (gameData.requirements["Rebirth button 4"].isCompleted())
-                rebirthFour()
+            rebirthFour()
         }
 
         if (e.key == "g") {
-            if (gameData.requirements["Rebirth button 5"].isCompleted())
-                rebirthFive()
+            rebirthFive()
         }
 
         switch (e.key) {
