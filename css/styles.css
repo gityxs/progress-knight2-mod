@@ -78,6 +78,10 @@ td {
     color: rgb(245, 119, 13);
 }
 
+.effect {
+    margin-bottom: 0.8rem;
+}
+
 .current {
     background-color: orange !important;    
 }
@@ -192,6 +196,10 @@ button:focus {
 
 .challenge {
     border: 0.1em solid red;
+}
+
+.game-paused {
+    border: 0.1em solid blue;
 }
 
 .dark-matter-title {

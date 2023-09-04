@@ -163,13 +163,19 @@ function renderSideBar() {
     // Hide the rebirthOneButton from the sidebar when you have `Almighty Eye` unlocked.
     document.getElementById("rebirthButton1").hidden = gameData.requirements["Almighty Eye"].isCompleted()
 
-    // Challenges
-    document.getElementById("challengeName").textContent = getFormattedTitle(gameData.active_challenge)
+    // Change sidebar when paused
+    if (gameData.paused) {
+        document.getElementById("info").classList.add("game-paused")
+    } else {
+        document.getElementById("info").classList.remove("game-paused")
+    }
 
+    // Challenges
     if (gameData.active_challenge == "") {
         document.getElementById("challengeTitle").hidden = true
         document.getElementById("info").classList.remove("challenge")
     } else {
+        document.getElementById("challengeName").textContent = getFormattedTitle(gameData.active_challenge)
         document.getElementById("challengeTitle").hidden = false
         document.getElementById("info").classList.add("challenge")
         // challenge reward
@@ -550,7 +556,7 @@ function renderPerks() {
             const perk_cost = getPerkCost(key)
 
             if (total_mpp >= perk_cost) {
-                button.getElementsByClassName("perkName")[0].textContent = getFormattedTitle(key)
+                button.getElementsByClassName("perkName")[0].textContent = getMetaversePerkName(key)
                 button.classList.remove("perk-locked")
             }
             else {
@@ -603,7 +609,7 @@ function renderDarkMatter() {
     renderDarkMatterShopButton("gottaBeFastBuyButton", canBuyGottaBeFast())
     renderDarkMatterShopButton("lifeCoachBuyButton", canBuyLifeCoach())
 
-    // Dark Matter Skill tree
+    // Dark Matter Ability tree
     renderSkillTreeButton(document.getElementById("speedIsLife1"), gameData.dark_matter_shop.speed_is_life != 0, [1, 3].includes(gameData.dark_matter_shop.speed_is_life), gameData.dark_matter >= 100)
     renderSkillTreeButton(document.getElementById("speedIsLife2"), gameData.dark_matter_shop.speed_is_life != 0, [2, 3].includes(gameData.dark_matter_shop.speed_is_life), gameData.dark_matter >= 100)
 
@@ -1022,7 +1028,7 @@ function setLayout(id) {
         setTabDarkMatter("shopTab")
 
         document.getElementById("maincolumnDarkMatter").classList.remove("settings-main-column")
-        document.getElementById("skillTreePageDarkMaterTitle").textContent = "Dark Matter Skills "
+        document.getElementById("skillTreePageDarkMaterTitle").textContent = "Dark Matter Abilities "
     }
     else {
         document.getElementById("tabcolumnDarkMater").classList.remove("hidden")
@@ -1246,7 +1252,7 @@ function createPerks(perkLayoutName) {
 
 function createPerk(template, name) {
     const button = template[0].content.firstElementChild.cloneNode(true)
-    button.getElementsByClassName("perkName")[0].textContent = getFormattedTitle(name)
+    button.getElementsByClassName("perkName")[0].textContent = getMetaversePerkName(name)
     button.getElementsByClassName("perkCost")[0].textContent = getPerkCost(name)
     button.id = "id" + removeSpaces(removeStrangeCharacters(name))
     button.onclick = () => { buyPerk(name) }    
