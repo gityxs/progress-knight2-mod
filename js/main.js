@@ -693,6 +693,9 @@ function setEnableKeybinds(enableKeybinds) {
 }
 
 function rebirthOne() {
+    if (!gameData.requirements["Rebirth button 1"].isCompleted())
+        return;
+
     gameData.rebirthOneCount += 1
     if (gameData.stats.fastest1 == null || gameData.rebirthOneTime < gameData.stats.fastest1)
         gameData.stats.fastest1 = gameData.rebirthOneTime
@@ -702,6 +705,9 @@ function rebirthOne() {
 }
 
 function rebirthTwo() {
+    if (!gameData.requirements["Rebirth button 2"].isCompleted())
+        return;
+
     gameData.rebirthTwoCount += 1
     gameData.evil += getEvilGain()
 
@@ -720,6 +726,9 @@ function rebirthTwo() {
 }
 
 function rebirthThree() {
+    if (!gameData.requirements["Rebirth button 3"].isCompleted())
+        return;
+
     gameData.rebirthThreeCount += 1
     gameData.essence += getEssenceGain()
     if (gameData.essence == Infinity)
@@ -745,6 +754,9 @@ function rebirthThree() {
 }
 
 function rebirthFour() {
+    if (!gameData.requirements["Rebirth button 4"].isCompleted())
+        return;
+
     gameData.rebirthFourCount += 1
     gameData.essence = 0
     gameData.evil = 0
@@ -775,6 +787,9 @@ function rebirthFour() {
 }
 
 function rebirthFive() {
+    if (!gameData.requirements["Rebirth button 5"].isCompleted())
+        return;
+
     gameData.rebirthFiveCount += 1
     gameData.perks_points += getMetaversePerkPointsGain()
     gameData.essence = 0
