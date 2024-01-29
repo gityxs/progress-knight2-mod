@@ -268,8 +268,8 @@ function renderJobs() {
         renderProgressBar(task, progressFill, progressBar)
 
         const valueElement = task.querySelector(".value", row)
-        valueElement.querySelector(".income").style.display = true
-        valueElement.querySelector(".effect").style.display = false
+        valueElement.querySelector(".income").style.display = 'table-cell'
+        valueElement.querySelector(".effect").style.display = 'none'
 
         formatCoins(task.getIncome(), valueElement.querySelector(".income"))
     }
@@ -307,8 +307,8 @@ function renderSkills() {
         renderProgressBar(task, progressFill, progressBar)
 
         const valueElement = task.querySelector(".value", row)
-        valueElement.querySelector(".income").style.display = false
-        valueElement.querySelector(".effect").style.display = true
+        valueElement.querySelector(".income").style.display = 'none'
+        valueElement.querySelector(".effect").style.display = 'table-cell'
 
         valueElement.querySelector(".effect").textContent = task.getEffectDescription()
     }
