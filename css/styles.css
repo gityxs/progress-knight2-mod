@@ -314,6 +314,7 @@ button:focus {
     flex-direction: column;
     overflow-x: auto;
     overflow-y: hidden;
+    width: 100%;
 }
 
 .quick-bar {
@@ -333,12 +334,12 @@ button:focus {
 }
 
 .plain-tab-column {
-    width: 164em;
+    width: 137em;
     height: auto;
 }
 
 .plain-main-column {
-    width: 164em;
+    width: 137em;
     height: auto;
     float: right;
     margin-bottom: 4em;

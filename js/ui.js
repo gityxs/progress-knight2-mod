@@ -758,7 +758,8 @@ function createHeaderRow(templates, categoryType, categoryName) {
 
 
     if (categoryType == jobCategories || categoryType == skillCategories) {
-        headerRow.getElementsByClassName("valueType")[0].textContent = categoryType == jobCategories ? "Income/day" : "Effect"
+        headerRow.getElementsByClassName("valueType")[0].textContent = categoryType == jobCategories ? "Income" : "Effect"
+        headerRow.getElementsByClassName("valueType")[0].style.width = categoryType == jobCategories ? "8em" : "18em"
     }
 
     headerRow.style.backgroundColor = headerRowColors[categoryName]
@@ -1004,6 +1005,9 @@ function setLayout(id) {
 
         document.getElementById("jobs").appendChild(document.getElementById("skillPage"))
         document.getElementById("jobs").appendChild(document.getElementById("itemPage"))
+        document.getElementById("jobPage").style.flex = 0.88
+        document.getElementById("skillPage").style.flex = 1.13
+        document.getElementById("itemPage").style.flex = 0.82
     } else {
         document.getElementById("skillsTabButton").classList.remove("hidden")
         document.getElementById("shopTabButton").classList.remove("hidden")
@@ -1019,6 +1023,9 @@ function setLayout(id) {
 
         document.getElementById("skills").appendChild(document.getElementById("skillPage"))
         document.getElementById("shop").appendChild(document.getElementById("itemPage"))
+        document.getElementById("jobPage").style.flex = 1
+        document.getElementById("skillPage").style.flex = 1
+        document.getElementById("itemPage").style.flex = 1
     }
 
     // dark matter layout
