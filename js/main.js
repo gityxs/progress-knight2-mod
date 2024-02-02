@@ -210,7 +210,7 @@ function setCustomEffects() {
         }
         else if (gameData.requirements["Speed speed speed"].isCompleted()) {
             mult = 7.5275 * Math.exp(0.0053 * (gameData.requirements["Strong Hope"].isCompleted() ? gameData.rebirthFiveTime
-                : gameData.rebirthThreeTime)) * (Math.log(getUnpausedGameSpeed()) / Math.log(2))
+                : gameData.rebirthThreeTime)) * (Math.log(getUnpausedGameSpeed()) / Math.log(2))            
             if (mult == Infinity)
                 mult = 1e308
             mult = softcap(mult, 10000000, 0.01)
@@ -220,7 +220,7 @@ function setCustomEffects() {
             if (kickin < 0.15)
                 kickin = 0.15
 
-            mult = 1 + (gameData.rebirthThreeTime / (7750 * kickin)) * (Math.log(getUnpausedGameSpeed()) / Math.log(2))
+            mult = 1 + ((gameData.rebirthThreeTime * (gameData.requirements["Angry Heroes"].isCompleted() ? 10 : 1)) / (7750 * kickin)) * (Math.log(getUnpausedGameSpeed()) / Math.log(2))            
             mult = softcap(mult, 200)
         }
 
@@ -692,6 +692,16 @@ function setEnableKeybinds(enableKeybinds) {
     selectElementInGroup("EnableKeybinds", enableKeybinds ? 0 : 1)
 }
 
+function resetEvilPerks(){
+    if (gameData.requirements["God's Blessings"].isCompleted())
+        return;
+    gameData.evil_perks_points = 0
+    gameData.evil_perks.reduce_eye_requirement = 0
+    gameData.evil_perks.reduce_evil_requirement = 0
+    gameData.evil_perks.reduce_the_void_requirement = 0
+    gameData.evil_perks.reduce_celestial_requirement = 0
+}
+
 function rebirthOne() {
     if (!gameData.requirements["Rebirth button 1"].isCompleted())
         return;
@@ -710,6 +720,8 @@ function rebirthTwo() {
 
     gameData.rebirthTwoCount += 1
     gameData.evil += getEvilGain()
+
+    resetEvilPerks()
 
     if (gameData.stats.fastest2 == null || gameData.rebirthTwoTime < gameData.stats.fastest2)
         gameData.stats.fastest2 = gameData.rebirthTwoTime
@@ -734,6 +746,8 @@ function rebirthThree() {
     if (gameData.essence == Infinity)
         gameData.essence = 1e308
     gameData.evil = evilTranGain()
+
+    resetEvilPerks()
 
 
     if (gameData.stats.fastest3 == null || gameData.rebirthThreeTime < gameData.stats.fastest3)
@@ -761,6 +775,8 @@ function rebirthFour() {
     gameData.essence = 0
     gameData.evil = 0
     gameData.dark_matter += getDarkMatterGain()
+    gameData.evil_perks_points = 0
+    gameData.evil_perks.receive_essence = 0
 
     if (gameData.metaverse.challenge_altar == 0 && gameData.perks.save_challenges == 0)  {
         for (const challenge in gameData.challenges) {
@@ -1263,12 +1279,14 @@ function update(needUpdateUI = true) {
     }
     increaseCoins()
 
+    gameData.evil_perks_points += applySpeed(getEvilPerksGeneration())
     gameData.dark_orbs += applySpeed(getDarkOrbGeneration())
     gameData.hypercubes += applySpeed(getHypercubeGeneration())
     if (gameData.hypercubes > getHypercubeCap())
         gameData.hypercubes = getHypercubeCap()
 
     applyMilestones()
+    applyEvilPerks()
     applyPerks()
     updateStats()
     if (needUpdateUI && !document.hidden)
@@ -1294,6 +1312,27 @@ function applyPerks() {
         if (gameData.dark_matter < getDarkMatterGain() * 10)
             gameData.dark_matter = getDarkMatterGain() * 10
     }
+}
+
+function applyEvilPerks() {
+        gameData.requirements["Rebirth note 2"].requirements[0].requirement = getEyeRequirement()
+        gameData.requirements["Rebirth button 1"].requirements[0].requirement = getEyeRequirement()
+        gameData.requirements["key1"].requirements[0].requirement = getEyeRequirement()
+
+        gameData.requirements["Rebirth note 3"].requirements[0].requirement = getEvilRequirement()
+        gameData.requirements["Rebirth button 2"].requirements[0].requirement = getEvilRequirement()
+        gameData.requirements["Rebirth stats evil"].requirements[0].requirement = getEvilRequirement()    
+        gameData.requirements["key2"].requirements[0].requirement = getEvilRequirement()
+
+        gameData.requirements["Rebirth note 4"].requirements[0].requirement = getVoidRequirement()
+        gameData.requirements["Void Manipulation"].requirements[0].requirement = getVoidRequirement()
+        gameData.requirements["The Void"].requirements[0].requirement = getVoidRequirement()
+        gameData.requirements["Corrupted"].requirements[0].requirement = getVoidRequirement()
+
+        gameData.requirements["Galactic Council"].requirements[0].requirement = getCelestialRequirement()
+        gameData.requirements["Celestial Powers"].requirements[0].requirement = getCelestialRequirement()
+        gameData.requirements["Rebirth note 5"].requirements[0].requirement = getCelestialRequirement()
+        gameData.requirements["Eternal Wanderer"].requirements[0].requirement = getCelestialRequirement()
 }
 
 function updateRequirements() {
