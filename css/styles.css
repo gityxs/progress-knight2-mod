@@ -392,7 +392,8 @@ button:focus {
     padding-bottom: 0.5em;
 }
 
-.perk {    
+.perk {
+    background-color: #EA4C89;
     border-style: solid;
     border-width: 0.1em;
     box-sizing: border-box;
@@ -417,39 +418,9 @@ button:focus {
     margin: 0.6em 0.7em 0.6em 0.7em;    
 }
 
-.metaperk{
-    background-color: #EA4C89;
-}
-
-.evilperk{
-    background-color: rgb(220, 80, 80);
-    height: 6em;
-    width: 100%;
-}
-.evilperk:hover{
-    background-color: rgb(240, 0, 0);
-}
-
-.evilperkbought{
-    background-color: rgb(100, 0, 0);
-}
-
-.evilperkbought:hover{
-    background-color: rgb(100, 0, 0);
-}
-
-.evilperkoff{
-    background-color: rgb(128, 128, 128);
-}
-
-.evilperkoff:hover{
-    background-color: rgb(128, 128, 128);
-}
-
-.metaperk:hover {
+.perk:hover {
     background-color: #F082AC;
 }
-
 
 .perk-grid {
     display: grid;
