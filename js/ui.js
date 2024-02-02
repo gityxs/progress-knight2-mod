@@ -59,6 +59,10 @@ function updateUI() {
         renderShop()
     }
 
+    if (currentTab == Tab.EVILPERKS) {
+        renderEvilPerks()
+    }
+
     if (currentTab == Tab.CHALLENGES)
         renderChallenges()
 
@@ -335,6 +339,45 @@ function renderShop() {
         active.style.backgroundColor = gameData.currentMisc.includes(item) || item == gameData.currentProperty ? color : "white"
         row.querySelector(".effect").textContent = item.getEffectDescription()
         formatCoins(item.getExpense(), row.querySelector(".expense"))
+    }
+}
+
+function renderEvilPerks() {
+    document.getElementById("evilperksDisplay").textContent = format(gameData.evil_perks_points)
+    document.getElementById("evilperksGainDisplay").textContent = format(getEvilPerksGeneration() * 365)
+
+    document.getElementById("eyeReq").textContent = getEyeRequirement()
+    document.getElementById("eyeReduceCount").textContent = format(gameData.evil_perks.reduce_eye_requirement, 0)
+    document.getElementById("evilperkCost1").textContent = format(getEvilPerkCost(1))
+
+
+    document.getElementById("evilReq").textContent = getEvilRequirement()
+    document.getElementById("evilReduceCount").textContent = format(gameData.evil_perks.reduce_evil_requirement, 0)
+    document.getElementById("evilperkCost2").textContent = format(getEvilPerkCost(2))
+
+    document.getElementById("voidManipulationReq").textContent = getVoidRequirement()
+    document.getElementById("voidManipulationReduceCount").textContent = format(gameData.evil_perks.reduce_the_void_requirement, 0)
+    document.getElementById("evilperkCost3").textContent = format(getEvilPerkCost(3))
+
+    document.getElementById("celestialReq").textContent = getCelestialRequirement()
+    document.getElementById("celestialReduceCount").textContent = format(gameData.evil_perks.reduce_celestial_requirement, 0)
+    document.getElementById("evilperkCost4").textContent = format(getEvilPerkCost(4))
+    
+    document.getElementById("essenceReward").textContent = format(getEssenceReward())
+    document.getElementById("essenceRewardPercent").textContent = format(getEssenceRewardPercent(),0)    
+    document.getElementById("essenceReceiveCount").textContent = format(gameData.evil_perks.receive_essence, 0)
+    document.getElementById("evilperkCost5").textContent = format(getEvilPerkCost(5))
+    
+    for (var i = 1; i <= 5; i++) {
+        if (gameData.evil_perks_points >= getEvilPerkCost(i)){
+            document.getElementById("evilperk"+i).classList.remove("evilperkoff")
+            document.getElementById("evilperk"+i).classList.remove("evilperkbought")
+        }
+        else if (hasEvilPerk(i)){
+            document.getElementById("evilperk"+i).classList.add("evilperkbought")            
+        }
+        else
+            document.getElementById("evilperk"+i).classList.add("evilperkoff")
     }
 }
 
@@ -1148,6 +1191,7 @@ const Tab = Object.freeze({
     JOBS: "jobs",
     SKILLS: "skills",
     SHOP: "shop",
+    EVILPERKS: "evilperks",
     CHALLENGES: "challenges",
     MILESTONES: "milestones",
     REBIRTH: "rebirth",

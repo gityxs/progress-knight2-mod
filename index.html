@@ -142,6 +142,7 @@
 					<div class="w3-button w3-bar-item tabButton baritem" id="jobsTabButton" onClick="setTab('jobs')">Hero</div>
 					<div class="w3-button w3-bar-item tabButton baritem hidden" id="skillsTabButton" onClick="setTab('skills')">Skills</div>
 					<div class="w3-button w3-bar-item tabButton baritem hidden" id="shopTabButton" onClick="setTab('shop')">Shop</div>
+					<div class="w3-button w3-bar-item tabButton baritem" id="evilperksTabButton" onClick="setTab('evilperks')">Evil perks</div>					
 					<div class="w3-button w3-bar-item tabButton baritem" id="challengesTabButton" onClick="setTab('challenges')">Challenges</div>
 					<div class="w3-button w3-bar-item tabButton baritem" id="milestonesTabButton" onClick="setTab('milestones')">Milestones</div>
 					<div class="w3-button w3-bar-item tabButton baritem" id="rebirthTabButton" onClick="setTab('rebirth')">Amulet</div>
@@ -278,6 +279,60 @@
 						<div class="tab hidden" id="skills">
 						</div>
 						<div class="tab hidden" id="shop">
+						</div>
+					</div>
+					<div class="tab column" style="display:none" id="evilperks">
+						<div id="maincolumnEvilperks" class="panel w3-margin-left w3-margin-top">
+							<div id="evilperksTab1" class="tabEvilperks">
+								<div id="evilperksPage1" class="panel page-column w3-padding">
+									<div>
+										<div class="color-evil">Evil perks</div>
+										<div>Evil perk gain speed based on total Evil.</div>
+										<div>Evil perks are reset on Embrace Evil.</div>
+										<div>
+											<p>Evil perk points: <span class="color-evil" id="evilperksDisplay"></span>
+											<br>Evil perk points gain: <span class="color-evil" id="evilperksGainDisplay"></span> per year.</p>
+										</div>
+										<div id="evilperksLayout" style="padding-top:0em">
+											<div class="evilperkItem">
+												<button id="evilperk1" class="perk evilperk" onclick="buyEvilPerk(1)">
+													<div>Reduce Eye Age Requirement by 5 years (<span id="eyeReduceCount"></span> times)</div>
+													<div>Current age requirement: <span id="eyeReq"></span> years</div>
+													<div>Cost: <span id="evilperkCost1">1</span> EPP</div>
+												</button>
+											</div>
+											<div class="evilperkItem">
+												<button id="evilperk2" class="perk evilperk" onclick="buyEvilPerk(2)">
+													<div>Reduce Evil Age Requirement by 12.5 years (<span id="evilReduceCount"></span> times)</div>
+													<div>Current age requirement: <span id="evilReq"></span> years</div>
+													<div>Cost: <span id="evilperkCost2">1</span> EPP</div>
+												</button>
+											</div>
+											<div class="evilperkItem">
+												<button id="evilperk3" class="perk evilperk" onclick="buyEvilPerk(3)">
+													<div>Reduce The Void Age Requirement by 100 years (<span id="voidManipulationReduceCount"></span> times)</div>
+													<div>Current age requirement: <span id="voidManipulationReq"></span> years</div>
+													<div>Cost: <span id="evilperkCost3">1</span> EPP</div>
+												</button>
+											</div>
+											<div class="evilperkItem">
+												<button id="evilperk4" class="perk evilperk" onclick="buyEvilPerk(4)">
+													<div>Reduce Celestial Age Requirement by 1000 years (<span id="celestialReduceCount"></span> times)</div>
+													<div>Current age requirement: <span id="celestialReq"></span> years</div>
+													<div>Cost: <span id="evilperkCost4">1</span> EPP</div>
+												</button>
+											</div>
+											<div class="evilperkItem">
+												<button id="evilperk5" class="perk evilperk hidden" onclick="buyEvilPerk(5)">
+													<div>Receive <span id="essenceRewardPercent"></span>% of your current Essence instantly (<span id="essenceReceiveCount"></span> times)</div>
+													<div>You will receive: <span id="essenceReward"></span> essence</div>
+													<div>Cost: <span id="evilperkCost5">1</span> EPP</div>
+												</button>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
 						</div>
 					</div>
 					<div class="tab column" style="display:none" id="challenges">
@@ -737,13 +792,13 @@
 									<div style="border-bottom: 0.1em solid rgb(217, 24, 119); padding-top: 2em;"></div>
 									<div id="perksLayout" class="perk-grid" style="padding-top:0em">
 										<template class="perkItem">
-											<button class="perk"><div class="perkName"></div><div style="font-size: smaller;">Cost: <span class="perkCost">1</span> MPP</div></button>
+											<button class="perk metaperk"><div class="perkName"></div><div style="font-size: smaller;">Cost: <span class="perkCost">1</span> MPP</div></button>
 										</template>
 									</div>
 									<div style="border-bottom: 0.1em solid rgb(217, 24, 119); padding-top: 0em; "></div>
 									<div id="perkTools" class="perk-grid" style="padding-top:0em">
-										<button class="perk perk-tool" onclick="collectPerkPoints(0)"><div>Assign unspent perk points</div></button>
-										<button class="perk perk-tool" onclick="collectPerkPoints(1)"><div>Collect all perk points</div></button>
+										<button class="perk metaperk perk-tool" onclick="collectPerkPoints(0)"><div>Assign unspent perk points</div></button>
+										<button class="perk metaperk perk-tool" onclick="collectPerkPoints(1)"><div>Collect all perk points</div></button>
 									</div>
 									<div id="Congratulations" class="congrats hidden">
 										<div>Congratulations!</div>
@@ -933,6 +988,7 @@
 	<script type="text/javascript" src="js/math.js"></script>
 	<script type="text/javascript" src="js/HackTimer.js"></script>
 	<script type="text/javascript" src="js/classes.js"></script>
+	<script type="text/javascript" src="js/evilperks.js"></script>
 	<script type="text/javascript" src="js/challenges.js"></script>
 	<script type="text/javascript" src="js/dark_matter.js"></script>
 	<script type="text/javascript" src="js/metaverse.js"></script>
