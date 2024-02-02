@@ -14,6 +14,7 @@
         reduce_celestial_requirement: 0,
         receive_essence: 0
     },
+    evil_perks_keep: false,
     essence: 0,
     dark_matter: 0,
     dark_orbs: 0,

@@ -637,6 +637,8 @@ function renderDarkMatter() {
 
     if (gameData.dark_matter_shop.a_miracle)
         document.getElementById("aMiracleBuyButton").classList.add("hidden")
+    else
+        document.getElementById("aMiracleBuyButton").classList.remove("hidden")
 
     if (getDarkOrbGeneration() != Infinity)
         document.getElementById("darkOrbGeneratorBuyButton").classList.remove("hidden")

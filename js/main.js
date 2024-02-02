@@ -696,10 +696,14 @@ function resetEvilPerks(){
     if (gameData.requirements["God's Blessings"].isCompleted())
         return;
     gameData.evil_perks_points = 0
-    gameData.evil_perks.reduce_eye_requirement = 0
-    gameData.evil_perks.reduce_evil_requirement = 0
-    gameData.evil_perks.reduce_the_void_requirement = 0
-    gameData.evil_perks.reduce_celestial_requirement = 0
+    gameData.evil_perks.receive_essence = 0
+    
+    if (!gameData.evil_perks_keep){
+        gameData.evil_perks.reduce_eye_requirement = 0
+        gameData.evil_perks.reduce_evil_requirement = 0
+        gameData.evil_perks.reduce_the_void_requirement = 0
+        gameData.evil_perks.reduce_celestial_requirement = 0
+    }
 }
 
 function rebirthOne() {
@@ -810,6 +814,8 @@ function rebirthFive() {
     gameData.perks_points += getMetaversePerkPointsGain()
     gameData.essence = 0
     gameData.evil = 0
+    gameData.evil_perks_points = 0
+    gameData.evil_perks.receive_essence = 0
     gameData.dark_matter = 0
     gameData.dark_orbs = 0
     gameData.dark_matter_shop.dark_orb_generator = 0
@@ -922,6 +928,7 @@ function rebirthReset(set_tab_to_jobs = true) {
             || gameData.settings.selectedTab == Tab.MILESTONES && gameData.essence > 0
             || gameData.settings.selectedTab == Tab.DARK_MATTER && gameData.dark_matter > 0
             || gameData.settings.selectedTab == Tab.REBIRTH
+            || gameData.settings.selectedTab == Tab.EVILPERKS 
         ) {
             // do not switch tab
         }
@@ -1315,24 +1322,27 @@ function applyPerks() {
 }
 
 function applyEvilPerks() {
-        gameData.requirements["Rebirth note 2"].requirements[0].requirement = getEyeRequirement()
-        gameData.requirements["Rebirth button 1"].requirements[0].requirement = getEyeRequirement()
-        gameData.requirements["key1"].requirements[0].requirement = getEyeRequirement()
+    if (!gameData.evil_perks_keep && gameData.requirements["Dark Orbiter"].isCompleted())
+        gameData.evil_perks_keep = true
 
-        gameData.requirements["Rebirth note 3"].requirements[0].requirement = getEvilRequirement()
-        gameData.requirements["Rebirth button 2"].requirements[0].requirement = getEvilRequirement()
-        gameData.requirements["Rebirth stats evil"].requirements[0].requirement = getEvilRequirement()    
-        gameData.requirements["key2"].requirements[0].requirement = getEvilRequirement()
+    gameData.requirements["Rebirth note 2"].requirements[0].requirement = getEyeRequirement()
+    gameData.requirements["Rebirth button 1"].requirements[0].requirement = getEyeRequirement()
+    gameData.requirements["key1"].requirements[0].requirement = getEyeRequirement()
 
-        gameData.requirements["Rebirth note 4"].requirements[0].requirement = getVoidRequirement()
-        gameData.requirements["Void Manipulation"].requirements[0].requirement = getVoidRequirement()
-        gameData.requirements["The Void"].requirements[0].requirement = getVoidRequirement()
-        gameData.requirements["Corrupted"].requirements[0].requirement = getVoidRequirement()
+    gameData.requirements["Rebirth note 3"].requirements[0].requirement = getEvilRequirement()
+    gameData.requirements["Rebirth button 2"].requirements[0].requirement = getEvilRequirement()
+    gameData.requirements["Rebirth stats evil"].requirements[0].requirement = getEvilRequirement()    
+    gameData.requirements["key2"].requirements[0].requirement = getEvilRequirement()
 
-        gameData.requirements["Galactic Council"].requirements[0].requirement = getCelestialRequirement()
-        gameData.requirements["Celestial Powers"].requirements[0].requirement = getCelestialRequirement()
-        gameData.requirements["Rebirth note 5"].requirements[0].requirement = getCelestialRequirement()
-        gameData.requirements["Eternal Wanderer"].requirements[0].requirement = getCelestialRequirement()
+    gameData.requirements["Rebirth note 4"].requirements[0].requirement = getVoidRequirement()
+    gameData.requirements["Void Manipulation"].requirements[0].requirement = getVoidRequirement()
+    gameData.requirements["The Void"].requirements[0].requirement = getVoidRequirement()
+    gameData.requirements["Corrupted"].requirements[0].requirement = getVoidRequirement()
+
+    gameData.requirements["Galactic Council"].requirements[0].requirement = getCelestialRequirement()
+    gameData.requirements["Celestial Powers"].requirements[0].requirement = getCelestialRequirement()
+    gameData.requirements["Rebirth note 5"].requirements[0].requirement = getCelestialRequirement()
+    gameData.requirements["Eternal Wanderer"].requirements[0].requirement = getCelestialRequirement()
 }
 
 function updateRequirements() {
