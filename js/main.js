@@ -281,15 +281,19 @@ function getEvilXpGain() {
     return getEvil()
 }
 
+function getEssence() {
+    if (gameData.essence == Infinity || gameData.essence > 1e308)
+        return 1e308
+    return gameData.essence
+}
+
 function getEssenceXpGain() {
     if (gameData.active_challenge == "dance_with_the_devil" || gameData.active_challenge == "the_darkest_time") {
         const essenceEffect = (Math.pow(getEssence(), 0.35) / 1e2) - 1
         return essenceEffect <= 0.01 ? 0 : essenceEffect
     }
 
-    if (gameData.essence == Infinity || gameData.essence > 1e308)
-        return 1e308
-    return gameData.essence
+    return getEssence()
 }
 
 function applyMultipliers(value, multipliers) {
