@@ -281,17 +281,15 @@ function getEvilXpGain() {
     return getEvil()
 }
 
-function getEssence() {
-    return gameData.essence
-}
-
 function getEssenceXpGain() {
     if (gameData.active_challenge == "dance_with_the_devil" || gameData.active_challenge == "the_darkest_time") {
         const essenceEffect = (Math.pow(getEssence(), 0.35) / 1e2) - 1
         return essenceEffect <= 0.01 ? 0 : essenceEffect
     }
 
-    return getEssence()
+    if (gameData.essence == Infinity || gameData.essence > 1e308)
+        return 1e308
+    return gameData.essence
 }
 
 function applyMultipliers(value, multipliers) {
@@ -747,7 +745,7 @@ function rebirthThree() {
 
     gameData.rebirthThreeCount += 1
     gameData.essence += getEssenceGain()
-    if (gameData.essence == Infinity)
+    if (gameData.essence == Infinity || gameData.essence > 1e308)
         gameData.essence = 1e308
     gameData.evil = evilTranGain()
 
@@ -913,7 +911,7 @@ function applyMilestones() {
                 gameData.essence = 1
             if (gameData.essence < getEssenceGain() * 10)
                 gameData.essence *= Math.pow(1.002, 1)
-            if (gameData.essence == Infinity)
+            if (gameData.essence == Infinity || gameData.essence > 1e308)
                 gameData.essence = 1e308
         }
     }
@@ -1311,7 +1309,7 @@ function applyPerks() {
     if (gameData.perks.instant_essence == 1) {
         if (gameData.essence < getEssenceGain() * 10)
             gameData.essence = getEssenceGain() * 10
-        if (gameData.essence == Infinity)
+        if (gameData.essence == Infinity || gameData.essence > 1e308)
             gameData.essence = 1e308
     }
 
@@ -1325,6 +1323,9 @@ function applyEvilPerks() {
     if (!gameData.evil_perks_keep && gameData.requirements["Dark Orbiter"].isCompleted())
         gameData.evil_perks_keep = true
 
+
+    gameData.requirements["Rebirth note 0"].requirements[0].requirement = getAge0Requirement()
+    gameData.requirements["Rebirth note 1"].requirements[0].requirement = getAge1Requirement()
     gameData.requirements["Rebirth note 2"].requirements[0].requirement = getEyeRequirement()
     gameData.requirements["Rebirth button 1"].requirements[0].requirement = getEyeRequirement()
     gameData.requirements["key1"].requirements[0].requirement = getEyeRequirement()

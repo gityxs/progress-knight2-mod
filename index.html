@@ -287,8 +287,9 @@
 								<div id="evilperksPage1" class="panel page-column w3-padding">
 									<div>
 										<div class="color-evil">Evil perks</div>
-										<div>Evil perk gain speed based on total Evil.</div>
-										<div>Evil perks are reset on Embrace Evil.</div>
+										<div>Evil perk points gain based on your <span id="eppInfo"></span>.</div>
+										<div>Evil perks and Evil perk points are reset on Embrace Evil.</div>
+										<div>Next evil perk age requirement is capped by previous.</div>
 										<div>
 											<p>Evil perk points: <span class="color-evil" id="evilperksDisplay"></span>
 											<br>Evil perk points gain: <span class="color-evil" id="evilperksGainDisplay"></span> per year.</p>
@@ -427,18 +428,18 @@
 								<div id="rebirthPage" class="panel page-column">
 									<ul>
 										<li id="rebirthNote0" class="hidden">
-											You stumble across a strange looking amulet on your 25th birthday. It does not look like
+											You stumble across a strange looking amulet on your <span id="age0"></span>th birthday. It does not look like
 											it has any worth on the market given that it's made from cheap-looking copper. However, you
 											feel a weird urge to keep the amulet, so you slip it into your pocket for safekeeping.
 										</li>
 										<li id="rebirthNote1" class="hidden">
-											On your 45th birthday, you feel the amulet shiver uncontrollably in your pocket. You take it
+											On your <span id="age1"></span>th birthday, you feel the amulet shiver uncontrollably in your pocket. You take it
 											out and the constant shivering suddenly stops. More to your bizarre surprise, you notice
 											a strange etching on the centre of the amulet.
 										</li>
 										<li id="rebirthNote2" class="hidden">
 											<div style="margin-bottom: 0.4em">
-												On your 65th birthday, you once again encounter the strange, unexplained shivering from your
+												On your <span id="age1a"></span>th birthday, you once again encounter the strange, unexplained shivering from your
 												amulet. But this time, a living eyeball emerges from the centre. Although terribly frightened,
 												you realise you do not have many years to live left anyway so you consider touching the eye
 												to see what happens.
@@ -447,7 +448,7 @@
 												By touching the eyeball, you will be reborn and have to restart life again, losing all your levels and coins.
 												However, you will gain <b>xp multipliers</b> for your heroes and skills equivalent to: <b>1 + the max level of the hero or skill / 10.</b>
 												This means you will learn everything again much more quickly than you did in your previous life. <span class="color-evil">
-													Something tells you that the amulet might evolve after living for <b>2 whole centuries</b>...
+													Something tells you that the amulet might evolve after living for <b><span id="age2"></span></b>...
 												</span>
 											</i>
 											<br>
@@ -456,10 +457,10 @@
 										</li>
 										<li id="rebirthNote3" class="hidden">
 											<div style="margin-bottom: 0.4em;">
-												Your gut instinct was right. The moment you hit the grand age of 200, you hear an ominous hum coming from the amulet.
+												Your gut instinct was right. The moment you hit the grand age of <span id="age2a"></span>, you hear an ominous hum coming from the amulet.
 												A mouth emerges from its surface and begins to cackle, and proceeds to say: "So you've made it this far... Are you ready to embrace evil?"
 												<br><span class="color-evil">
-													The amulet might transform even further after living for a <b>millennium</b>.
+													The amulet might transform even further after living for <b><span id="age3"></span></b>.
 												</span>
 											</div>
 											<i class="color-evil">
@@ -473,11 +474,11 @@
 										</li>
 										<li id="rebirthNote4" class="hidden">
 											<div style="margin-bottom: 0.4em;">
-												A thousand years have come and gone and yet, you still remain alive... somehow. You feel your amulet shivering again and to your surprise, you see small tendrils
+												A <span id="age3a"></span> years have come and gone and yet, you still remain alive... somehow. You feel your amulet shivering again and to your surprise, you see small tendrils
 												full of eyeballs emergin from it. As you are about to drop the amulet, you hear frightening screech followed by whispers in your head... <b>"You have to embrace the Void..."</b>
 												<br>
 												<span class="color-evil">
-													The amulet will reach its final form after <b>ten millennia</b>!
+													The amulet will reach its final form after <b><span id="age4"></span></b>!
 												</span>
 											</div>
 											<i style="color: rgb(204, 0, 255)">
@@ -486,7 +487,7 @@
 										</li>
 										<li id="rebirthNote5" class="hidden">
 											<div style="margin-bottom: 0.4em;">
-												Ten millenia have passed... most of them spent serving the Void, yet there is still a glimpse of humanity inside of you. All of the sudden your amulet starts to glow in the distance,
+												<span id="age4a"></span> have passed... most of them spent serving the Void, yet there is still a glimpse of humanity inside of you. All of the sudden your amulet starts to glow in the distance,
 												illuminating darkness around you with the brightness of a thousand suns. With the very last remnant of your free will, you run to your amulet and touch it... <b>
 													"You are now part of something bigger than yourself..."
 												</b>

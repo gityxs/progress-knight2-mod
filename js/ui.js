@@ -79,6 +79,9 @@ function updateUI() {
 
     if (currentTab == Tab.SETTINGS)
         renderSettings()
+
+    if (currentTab == Tab.REBIRTH)
+        renderRebirth()
 }
 
 function renderSideBar() {
@@ -342,7 +345,58 @@ function renderShop() {
     }
 }
 
+function renderRebirth() {
+
+    document.getElementById("age0").textContent = getAge0Requirement() 
+    document.getElementById("age1").textContent = getAge1Requirement() 
+    document.getElementById("age1a").textContent = getEyeRequirement()
+
+    const age2req = getEvilRequirement()
+    let age2 = ""
+    if (age2req == 200)
+        age2 = "2 whole centuries"
+    else if (age2req == 100)
+        age2 = "1 century"
+    else
+        age2 = age2req + " years"
+
+    document.getElementById("age2").textContent = age2 
+    document.getElementById("age2a").textContent = age2req
+
+
+    const age3req = getVoidRequirement()
+    let age3 = ""
+    if (age3req == 1000)
+        age3 = "a millennium"
+    else if (age3req > 100)
+        age3 = (age3req / 100) + " whole centuries"
+    else
+        age3 = "1 century"
+    document.getElementById("age3").textContent = age3 
+
+    var ones = new Array('', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten');
+
+    let age3a = ""
+    if (age3req == 1000)
+        age3a = "thousand "
+    else
+        age3a = ones[age3req / 100] + " hundred "    
+
+    document.getElementById("age3a").textContent = age3a
+
+    const age4req = getCelestialRequirement()
+    let age4 = ""
+    if (age4req == 1000)
+        age4 = "a millennium"
+    else
+        age4 = ones[age4req / 1000] + " millennia"    
+
+    document.getElementById("age4").textContent = age4    
+    document.getElementById("age4a").textContent = age4.charAt(0).toUpperCase() + age4.slice(1)   
+}
+
 function renderEvilPerks() {
+    document.getElementById("eppInfo").textContent = (gameData.essence > 0) ? "Evil and Essence" : "Evil"
     document.getElementById("evilperksDisplay").textContent = format(gameData.evil_perks_points)
     document.getElementById("evilperksGainDisplay").textContent = format(getEvilPerksGeneration() * 365)
 
