@@ -64,7 +64,7 @@
         currencyNotation: 0,
         numberNotation: 1,
         layout: 1,
-        fontSize: 3,
+        fontSize: 0,
         selectedTab: 'jobs',
         enableKeybinds: false,
     },
@@ -128,6 +128,8 @@
     boost_cooldown: 0.0,
     boost_timer: 0.0,
     boost_active: false,
+
+    save_date_time: 0
 }
 
 var tempData = {}

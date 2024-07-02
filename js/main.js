@@ -6,6 +6,11 @@ onerror = () => {
     }, 30 * 1000)
 }
 
+window.addEventListener('resize', function(event) {
+    onResize(event.target.outerWidth)
+}, true);
+
+
 function addMultipliers() {
     for (const taskName in gameData.taskData) {
         const task = gameData.taskData[taskName]
@@ -931,6 +936,7 @@ function rebirthReset(set_tab_to_jobs = true) {
             || gameData.settings.selectedTab == Tab.DARK_MATTER && gameData.dark_matter > 0
             || gameData.settings.selectedTab == Tab.REBIRTH
             || gameData.settings.selectedTab == Tab.EVILPERKS 
+            || gameData.settings.selectedTab == Tab.INFO 
         ) {
             // do not switch tab
         }
@@ -1001,18 +1007,20 @@ function getLifespan() {
 
 function isAlive() {
     const condition = gameData.days < getLifespan() || getLifespan() == Infinity
-    const deathText = document.getElementById("deathText")
+
     if (!condition) {
-        gameData.days = getLifespan()
-        deathText.classList.remove("hidden")
+        gameData.days = getLifespan()        
     }
-    else {
-        deathText.classList.add("hidden")
+
+    if (!in_offline_progress){
+        const deathText = document.getElementById("deathText")
+        if (!condition)  
+            deathText.classList.remove("hidden")        
+        else 
+            deathText.classList.add("hidden")        
     }
     return condition && !tempData.hasError
 }
-
-
 
 function canSimulate() {
     return !gameData.paused && isAlive()
@@ -1168,6 +1176,7 @@ function replaceSaveDict(dict, saveDict) {
 }
 
 function saveGameData() {
+    gameData.save_date_time = Date.now()
     localStorage.setItem("gameDataSave", JSON.stringify(gameData))
 }
 
@@ -1262,6 +1271,7 @@ function loadGameData() {
 
             // Remove invalid active misc items
             gameData.currentMisc = gameData.currentMisc.filter((element) => element instanceof Item)
+            
         }
     } catch (error) {
         console.error(error)
@@ -1272,7 +1282,62 @@ function loadGameData() {
     assignMethods()
 }
 
+var intervalID = 0;
+var totalTimes = 0;
+var executedTimes = 0;
+var in_offline_progress=false;
+var lastUpdate = 0;
+
+function setIntervalX(callback, delay, repetitions) {
+    var x = 0;
+    intervalID = window.setInterval(function () {
+
+       callback();
+
+       if (++x >= repetitions) {
+           stopOffline()
+       }
+    }, delay);
+}
+
+function calc_offline_progress(ms){
+    if (ms > 10000){
+        in_offline_progress = true
+        intervalID = 0
+        totalTimes = 0
+        executedTimes = 0        
+        var offline_max_time = 3600 * 1000 // 1 hour
+        if (ms > offline_max_time)
+            ms = offline_max_time
+        const updates_in_one_tick = 100
+        totalTimes = ms / (1000 / updateSpeed)
+        var times = totalTimes / updates_in_one_tick
+        document.getElementById("offline_progress").hidden = false
+        document.getElementById("mainarea").hidden = true
+        setIntervalX(() => update_times(updates_in_one_tick), 20, times)        
+    }
+}
+
+function update_times(times){
+    for (var i = 0; i < times; i++) {
+        update(false)
+        executedTimes++
+        document.getElementById("offline_time").textContent = Math.floor(executedTimes*100/totalTimes) + "%"
+        if (!isAlive())
+            stopOffline()
+    }   
+}
+
+function stopOffline(){
+    window.clearInterval(intervalID);
+    document.getElementById("offline_progress").hidden = true
+    document.getElementById("mainarea").hidden = false
+    in_offline_progress = false;
+}
+
 function update(needUpdateUI = true) {
+    if (in_offline_progress && needUpdateUI)
+        return
     makeHeroes()
     increaseRealtime()
     increaseDays()
@@ -1455,12 +1520,8 @@ function isNextDarkMagicSkillInReach() {
             }
         }
     }
-
     return false
 }
-
-
-
 
 // Loads the game save, does the initial render and starts the game update and render loop.
 
@@ -1487,9 +1548,18 @@ loadGameData()
 
 initializeUI()
 
+
 setCustomEffects()
 addMultipliers()
 
+if ("save_date_time" in gameData && gameData.save_date_time > 0) {
+   calc_offline_progress(Date.now() - gameData.save_date_time);            
+}
+
+if (!in_offline_progress)
+    document.getElementById("mainarea").hidden = false
+
+onResize(window.outerWidth)
 update()
 
 setTab(gameData.settings.selectedTab)
@@ -1503,6 +1573,10 @@ var gameloop = setInterval(function() {
     if (ticking) return;
     ticking = true;
     update();
+    var ms = Date.now() - lastUpdate
+    if (lastUpdate != 0 && ms >= 10000 && !in_offline_progress)
+        calc_offline_progress(ms)
+    lastUpdate = Date.now()
 
     // fps for debug only
     //var thisFrameTime = (thisLoop = new Date) - lastLoop;
