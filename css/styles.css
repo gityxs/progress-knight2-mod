@@ -78,6 +78,10 @@ td {
     color: rgb(245, 119, 13);
 }
 
+.effect {
+    margin-bottom: 0.8rem;
+}
+
 .current {
     background-color: orange !important;    
 }
@@ -194,6 +198,10 @@ button:focus {
     border: 0.1em solid red;
 }
 
+.game-paused {
+    border: 0.1em solid blue;
+}
+
 .dark-matter-title {
     color:gold;
     border-bottom: 0.1em solid goldenrod;
@@ -306,6 +314,7 @@ button:focus {
     flex-direction: column;
     overflow-x: auto;
     overflow-y: hidden;
+    width: 100%;
 }
 
 .quick-bar {
@@ -325,12 +334,12 @@ button:focus {
 }
 
 .plain-tab-column {
-    width: 164em;
+    width: 137em;
     height: auto;
 }
 
 .plain-main-column {
-    width: 164em;
+    width: 137em;
     height: auto;
     float: right;
     margin-bottom: 4em;
@@ -383,8 +392,7 @@ button:focus {
     padding-bottom: 0.5em;
 }
 
-.perk {
-    background-color: #EA4C89;
+.perk {    
     border-style: solid;
     border-width: 0.1em;
     box-sizing: border-box;
@@ -409,9 +417,39 @@ button:focus {
     margin: 0.6em 0.7em 0.6em 0.7em;    
 }
 
-.perk:hover {
+.metaperk{
+    background-color: #EA4C89;
+}
+
+.evilperk{
+    background-color: rgb(220, 80, 80);
+    height: 6em;
+    width: 100%;
+}
+.evilperk:hover{
+    background-color: rgb(240, 0, 0);
+}
+
+.evilperkbought{
+    background-color: rgb(100, 0, 0);
+}
+
+.evilperkbought:hover{
+    background-color: rgb(100, 0, 0);
+}
+
+.evilperkoff{
+    background-color: rgb(128, 128, 128);
+}
+
+.evilperkoff:hover{
+    background-color: rgb(128, 128, 128);
+}
+
+.metaperk:hover {
     background-color: #F082AC;
 }
+
 
 .perk-grid {
     display: grid;
@@ -448,7 +486,7 @@ button:focus {
 .color-essence {
     color: rgb(24, 210, 217);
 }
-.color-dark-mater {
+.color-dark-matter {
     color: rgb(132, 99, 206);
 }
 .color-dark-orbs {
@@ -499,4 +537,15 @@ button:focus {
 
 .rowtitle {
     padding: 0.3em 1em 0em 1em !important;
+}
+
+.congrats {
+    margin-top: 1em;
+    padding: 1em 1em 1em 1em !important;
+    font-size: 320%;
+    color: #d30202;
+    text-align: center;
+    border: 0.01em solid red;
+    border-radius: 0.5em;
+    animation: currency-rainbow 40s infinite;
 }

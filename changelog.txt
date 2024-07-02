@@ -1,3 +1,13 @@
+version 2.4.0 / 20.02.2024
+* Added Evil perks
+
+version 2.3.3 / 31.07.2023
+* Reduce the time warping effect in the Legends never die challenge so it can always be completed.
+* Rename "Dark Matter Skills" to "Dark Matter abilities" to prevent confusion.
+* Add a visual indicator when the game is paused.
+* Add a bit more padding to the "Next effect" text.
+* Fix spelling mistakes and inconsistenties.
+
 version 2.3.2 / 30.04.2023
 * Fix a few small bugs
 * Add a few small quality of life improvements

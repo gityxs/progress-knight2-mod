@@ -109,7 +109,7 @@ const tooltips = {
     "Immortal Ruler": "You have only one goal: ruling this universe till infinity.",
     "Dark Magician": "By performing forbidden magic on your subordinates, you can extract every last drop of Essence from them.",
     "Universal Ruler": "No one dares to challenge your rule when ruling with an iron fist.",
-    "Blinded By Darkness": "Blinded by darkness, you can no longer control yourself. You start to destroy everything in existance to calm yourself.",
+    "Blinded By Darkness": "Blinded by darkness, you can no longer control yourself. You start to destroy everything in existence to calm yourself.",
 
     // Properties
     "Homeless": "Sleep on the uncomfortable, filthy streets while almost freezing to death every night. It cannot get any worse than this.",
@@ -158,7 +158,7 @@ const tooltips = {
     "Void Dust": "Purest version of void created material; a teaspoon of it is as heavy as a small planet.",
     "Celestial Robe": "The most powerful and essential equipment of any Celestial. Acts as a source of infinite power.",
     "Universe Fragment": "From the time the universe was born. Can create more small universes.",
-    "Multiverse Fragment": "Came into existance long before our universe was created, this strange looking object with no shape radiates unlimited energy.",
+    "Multiverse Fragment": "Came into existence long before our universe was created, this strange looking object with no shape radiates unlimited energy.",
     "Stairway to heaven": "A staircase to the all mighty themselves.",
     "Highway to hell": "The devil invites you to his palace of terror.",
     "Tesseract": "This object is from a higher dimensional world.",
@@ -213,5 +213,5 @@ const tooltips = {
     "A New Hope": "No more of this Faint Hope nonsense!!!",
     "Time is a flat circle": "This is a world where nothing is solved. Someone once told me, time is a flat circle. Everything we’ve ever done or will do, we’re gonna do over and over and over again.",
     "The End is near": "We don't try to live forever",
-    "The End": "The End",
+    "The End": "There is always an end",
 }

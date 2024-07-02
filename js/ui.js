@@ -59,6 +59,10 @@ function updateUI() {
         renderShop()
     }
 
+    if (currentTab == Tab.EVILPERKS) {
+        renderEvilPerks()
+    }
+
     if (currentTab == Tab.CHALLENGES)
         renderChallenges()
 
@@ -75,6 +79,9 @@ function updateUI() {
 
     if (currentTab == Tab.SETTINGS)
         renderSettings()
+
+    if (currentTab == Tab.REBIRTH)
+        renderRebirth()
 }
 
 function renderSideBar() {
@@ -163,13 +170,19 @@ function renderSideBar() {
     // Hide the rebirthOneButton from the sidebar when you have `Almighty Eye` unlocked.
     document.getElementById("rebirthButton1").hidden = gameData.requirements["Almighty Eye"].isCompleted()
 
-    // Challenges
-    document.getElementById("challengeName").textContent = getFormattedTitle(gameData.active_challenge)
+    // Change sidebar when paused
+    if (gameData.paused) {
+        document.getElementById("info").classList.add("game-paused")
+    } else {
+        document.getElementById("info").classList.remove("game-paused")
+    }
 
+    // Challenges
     if (gameData.active_challenge == "") {
         document.getElementById("challengeTitle").hidden = true
         document.getElementById("info").classList.remove("challenge")
     } else {
+        document.getElementById("challengeName").textContent = getFormattedTitle(gameData.active_challenge)
         document.getElementById("challengeTitle").hidden = false
         document.getElementById("info").classList.add("challenge")
         // challenge reward
@@ -262,8 +275,8 @@ function renderJobs() {
         renderProgressBar(task, progressFill, progressBar)
 
         const valueElement = task.querySelector(".value", row)
-        valueElement.querySelector(".income").style.display = true
-        valueElement.querySelector(".effect").style.display = false
+        valueElement.querySelector(".income").style.display = 'table-cell'
+        valueElement.querySelector(".effect").style.display = 'none'
 
         formatCoins(task.getIncome(), valueElement.querySelector(".income"))
     }
@@ -301,8 +314,8 @@ function renderSkills() {
         renderProgressBar(task, progressFill, progressBar)
 
         const valueElement = task.querySelector(".value", row)
-        valueElement.querySelector(".income").style.display = false
-        valueElement.querySelector(".effect").style.display = true
+        valueElement.querySelector(".income").style.display = 'none'
+        valueElement.querySelector(".effect").style.display = 'table-cell'
 
         valueElement.querySelector(".effect").textContent = task.getEffectDescription()
     }
@@ -329,6 +342,96 @@ function renderShop() {
         active.style.backgroundColor = gameData.currentMisc.includes(item) || item == gameData.currentProperty ? color : "white"
         row.querySelector(".effect").textContent = item.getEffectDescription()
         formatCoins(item.getExpense(), row.querySelector(".expense"))
+    }
+}
+
+function renderRebirth() {
+
+    document.getElementById("age0").textContent = getAge0Requirement() 
+    document.getElementById("age1").textContent = getAge1Requirement() 
+    document.getElementById("age1a").textContent = getEyeRequirement()
+
+    const age2req = getEvilRequirement()
+    let age2 = ""
+    if (age2req == 200)
+        age2 = "2 whole centuries"
+    else if (age2req == 100)
+        age2 = "1 century"
+    else
+        age2 = age2req + " years"
+
+    document.getElementById("age2").textContent = age2 
+    document.getElementById("age2a").textContent = age2req
+
+
+    const age3req = getVoidRequirement()
+    let age3 = ""
+    if (age3req == 1000)
+        age3 = "a millennium"
+    else if (age3req > 100)
+        age3 = (age3req / 100) + " whole centuries"
+    else
+        age3 = "1 century"
+    document.getElementById("age3").textContent = age3 
+
+    var ones = new Array('', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten');
+
+    let age3a = ""
+    if (age3req == 1000)
+        age3a = "thousand "
+    else
+        age3a = ones[age3req / 100] + " hundred "    
+
+    document.getElementById("age3a").textContent = age3a
+
+    const age4req = getCelestialRequirement()
+    let age4 = ""
+    if (age4req == 1000)
+        age4 = "a millennium"
+    else
+        age4 = ones[age4req / 1000] + " millennia"    
+
+    document.getElementById("age4").textContent = age4    
+    document.getElementById("age4a").textContent = age4.charAt(0).toUpperCase() + age4.slice(1)   
+}
+
+function renderEvilPerks() {
+    document.getElementById("eppInfo").textContent = (gameData.essence > 0) ? "Evil and Essence" : "Evil"
+    document.getElementById("evilperksDisplay").textContent = format(gameData.evil_perks_points)
+    document.getElementById("evilperksGainDisplay").textContent = format(getEvilPerksGeneration() * 365)
+
+    document.getElementById("eyeReq").textContent = getEyeRequirement()
+    document.getElementById("eyeReduceCount").textContent = format(gameData.evil_perks.reduce_eye_requirement, 0)
+    document.getElementById("evilperkCost1").textContent = format(getEvilPerkCost(1))
+
+
+    document.getElementById("evilReq").textContent = getEvilRequirement()
+    document.getElementById("evilReduceCount").textContent = format(gameData.evil_perks.reduce_evil_requirement, 0)
+    document.getElementById("evilperkCost2").textContent = format(getEvilPerkCost(2))
+
+    document.getElementById("voidManipulationReq").textContent = getVoidRequirement()
+    document.getElementById("voidManipulationReduceCount").textContent = format(gameData.evil_perks.reduce_the_void_requirement, 0)
+    document.getElementById("evilperkCost3").textContent = format(getEvilPerkCost(3))
+
+    document.getElementById("celestialReq").textContent = getCelestialRequirement()
+    document.getElementById("celestialReduceCount").textContent = format(gameData.evil_perks.reduce_celestial_requirement, 0)
+    document.getElementById("evilperkCost4").textContent = format(getEvilPerkCost(4))
+    
+    document.getElementById("essenceReward").textContent = format(getEssenceReward())
+    document.getElementById("essenceRewardPercent").textContent = format(getEssenceRewardPercent(),0)    
+    document.getElementById("essenceReceiveCount").textContent = format(gameData.evil_perks.receive_essence, 0)
+    document.getElementById("evilperkCost5").textContent = format(getEvilPerkCost(5))
+    
+    for (var i = 1; i <= 5; i++) {
+        if (gameData.evil_perks_points >= getEvilPerkCost(i)){
+            document.getElementById("evilperk"+i).classList.remove("evilperkoff")
+            document.getElementById("evilperk"+i).classList.remove("evilperkbought")
+        }
+        else if (hasEvilPerk(i)){
+            document.getElementById("evilperk"+i).classList.add("evilperkbought")            
+        }
+        else
+            document.getElementById("evilperk"+i).classList.add("evilperkoff")
     }
 }
 
@@ -428,7 +531,7 @@ function renderMilestones() {
     }
 }
 
-function renderDarkMaterShopButton(elemName, condition) {
+function renderDarkMatterShopButton(elemName, condition) {
     document.getElementById(elemName).disabled = !condition    
 }
 
@@ -503,9 +606,9 @@ function renderMetaverse() {
     else
         document.getElementById("challengeAltarButton").classList.add("hidden")
 
-    document.getElementById("darkMaterMultGain").textContent = format(darkMaterMultGain(), 2)
-    document.getElementById("darkMaterMultCost").textContent = format(darkMaterMultCost())
-    document.getElementById("darkMaterMultButton").disabled = !canBuyDarkMaterMult()
+    document.getElementById("darkMatterMultGain").textContent = format(darkMatterMultGain(), 2)
+    document.getElementById("darkMatterMultCost").textContent = format(darkMatterMultCost())
+    document.getElementById("darkMaterMultButton").disabled = !canBuyDarkMatterMult()
 
     // Perks
     renderPerks()
@@ -533,10 +636,7 @@ function renderPerks() {
     let hide_next = false
     let index = 0
 
-    //
-
-    sortable = getSortedPerks()
-    for (const perkName of sortable) {
+    for (const perkName of getSortedPerks()) {
         const key = perkName[0]
         const button = document.getElementById("id" + key)
 
@@ -553,7 +653,7 @@ function renderPerks() {
             const perk_cost = getPerkCost(key)
 
             if (total_mpp >= perk_cost) {
-                button.getElementsByClassName("perkName")[0].textContent = getFormattedTitle(key)
+                button.getElementsByClassName("perkName")[0].textContent = getMetaversePerkName(key)
                 button.classList.remove("perk-locked")
             }
             else {
@@ -591,6 +691,8 @@ function renderDarkMatter() {
 
     if (gameData.dark_matter_shop.a_miracle)
         document.getElementById("aMiracleBuyButton").classList.add("hidden")
+    else
+        document.getElementById("aMiracleBuyButton").classList.remove("hidden")
 
     if (getDarkOrbGeneration() != Infinity)
         document.getElementById("darkOrbGeneratorBuyButton").classList.remove("hidden")
@@ -599,14 +701,14 @@ function renderDarkMatter() {
 
     // enable/disable buttons
 
-    renderDarkMaterShopButton("darkOrbGeneratorBuyButton", canBuyDarkOrbGenerator())
-    renderDarkMaterShopButton("aMiracleBuyButton", canBuyAMiracle())
-    renderDarkMaterShopButton("aDealWithTheChairmanBuyButton", canBuyADealWithTheChairman())
-    renderDarkMaterShopButton("aGiftFromGodBuyButton", canBuyAGiftFromGod())
-    renderDarkMaterShopButton("gottaBeFastBuyButton", canBuyGottaBeFast())
-    renderDarkMaterShopButton("lifeCoachBuyButton", canBuyLifeCoach())
+    renderDarkMatterShopButton("darkOrbGeneratorBuyButton", canBuyDarkOrbGenerator())
+    renderDarkMatterShopButton("aMiracleBuyButton", canBuyAMiracle())
+    renderDarkMatterShopButton("aDealWithTheChairmanBuyButton", canBuyADealWithTheChairman())
+    renderDarkMatterShopButton("aGiftFromGodBuyButton", canBuyAGiftFromGod())
+    renderDarkMatterShopButton("gottaBeFastBuyButton", canBuyGottaBeFast())
+    renderDarkMatterShopButton("lifeCoachBuyButton", canBuyLifeCoach())
 
-    // Dark Matter Skill tree
+    // Dark Matter Ability tree
     renderSkillTreeButton(document.getElementById("speedIsLife1"), gameData.dark_matter_shop.speed_is_life != 0, [1, 3].includes(gameData.dark_matter_shop.speed_is_life), gameData.dark_matter >= 100)
     renderSkillTreeButton(document.getElementById("speedIsLife2"), gameData.dark_matter_shop.speed_is_life != 0, [2, 3].includes(gameData.dark_matter_shop.speed_is_life), gameData.dark_matter >= 100)
 
@@ -755,7 +857,8 @@ function createHeaderRow(templates, categoryType, categoryName) {
 
 
     if (categoryType == jobCategories || categoryType == skillCategories) {
-        headerRow.getElementsByClassName("valueType")[0].textContent = categoryType == jobCategories ? "Income/day" : "Effect"
+        headerRow.getElementsByClassName("valueType")[0].textContent = categoryType == jobCategories ? "Income" : "Effect"
+        headerRow.getElementsByClassName("valueType")[0].style.width = categoryType == jobCategories ? "8em" : "18em"
     }
 
     headerRow.style.backgroundColor = headerRowColors[categoryName]
@@ -1001,6 +1104,9 @@ function setLayout(id) {
 
         document.getElementById("jobs").appendChild(document.getElementById("skillPage"))
         document.getElementById("jobs").appendChild(document.getElementById("itemPage"))
+        document.getElementById("jobPage").style.flex = 0.88
+        document.getElementById("skillPage").style.flex = 1.13
+        document.getElementById("itemPage").style.flex = 0.82
     } else {
         document.getElementById("skillsTabButton").classList.remove("hidden")
         document.getElementById("shopTabButton").classList.remove("hidden")
@@ -1016,6 +1122,9 @@ function setLayout(id) {
 
         document.getElementById("skills").appendChild(document.getElementById("skillPage"))
         document.getElementById("shop").appendChild(document.getElementById("itemPage"))
+        document.getElementById("jobPage").style.flex = 1
+        document.getElementById("skillPage").style.flex = 1
+        document.getElementById("itemPage").style.flex = 1
     }
 
     // dark matter layout
@@ -1025,7 +1134,7 @@ function setLayout(id) {
         setTabDarkMatter("shopTab")
 
         document.getElementById("maincolumnDarkMatter").classList.remove("settings-main-column")
-        document.getElementById("skillTreePageDarkMaterTitle").textContent = "Dark Matter Skills "
+        document.getElementById("skillTreePageDarkMaterTitle").textContent = "Dark Matter Abilities "
     }
     else {
         document.getElementById("tabcolumnDarkMater").classList.remove("hidden")
@@ -1138,6 +1247,7 @@ const Tab = Object.freeze({
     JOBS: "jobs",
     SKILLS: "skills",
     SHOP: "shop",
+    EVILPERKS: "evilperks",
     CHALLENGES: "challenges",
     MILESTONES: "milestones",
     REBIRTH: "rebirth",
@@ -1239,10 +1349,9 @@ function getSortedPerks() {
 }
 
 function createPerks(perkLayoutName) {
-    sortable = getSortedPerks()
     const buttonTemplate = document.getElementsByClassName("perkItem")
     const perksLayout = document.getElementById(perkLayoutName)
-    for (const perkName of sortable) {
+    for (const perkName of getSortedPerks()) {
         const perk = createPerk(buttonTemplate, perkName[0])
         perksLayout.appendChild(perk)
     }
@@ -1250,7 +1359,7 @@ function createPerks(perkLayoutName) {
 
 function createPerk(template, name) {
     const button = template[0].content.firstElementChild.cloneNode(true)
-    button.getElementsByClassName("perkName")[0].textContent = getFormattedTitle(name)
+    button.getElementsByClassName("perkName")[0].textContent = getMetaversePerkName(name)
     button.getElementsByClassName("perkCost")[0].textContent = getPerkCost(name)
     button.id = "id" + removeSpaces(removeStrangeCharacters(name))
     button.onclick = () => { buyPerk(name) }    
@@ -1317,28 +1426,23 @@ window.addEventListener('keydown', function (e) {
             return
 
         if (e.key == "q") {
-            if (gameData.requirements["Rebirth button 1"].isCompleted())
-                rebirthOne()
+            rebirthOne()
         }
 
         if (e.key == "e") {
-            if (gameData.requirements["Rebirth button 2"].isCompleted())
-                rebirthTwo()
+            rebirthTwo()
         }
 
         if (e.key == "t") {
-            if (gameData.requirements["Rebirth button 3"].isCompleted())
-                rebirthThree()
+            rebirthThree()
         }
 
         if (e.key == "u") {
-            if (gameData.requirements["Rebirth button 4"].isCompleted())
-                rebirthFour()
+            rebirthFour()
         }
 
         if (e.key == "g") {
-            if (gameData.requirements["Rebirth button 5"].isCompleted())
-                rebirthFive()
+            rebirthFive()
         }
 
         switch (e.key) {
