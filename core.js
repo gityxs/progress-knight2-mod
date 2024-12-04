@@ -4,6 +4,8 @@
  @author  : 麦子、JAR、小蓝、好阳光的小锅巴
  @version : V0.6.1 - 2019-07-09
  @website : http://www.g8hh.com
+ @idle games : http://www.gityx.com
+ @QQ Group : 627141737
 
 */
 
@@ -219,22 +221,21 @@ function TransSubTextNode(node) {
                 mutation.target.innerText = cnItem(mutation.target.innerText, mutation.target);
             } else if (mutation.addedNodes.length > 0) {
                 for (let node of mutation.addedNodes) {
-					if (!targetNode.contains(node)) continue; //不要和空气斗智斗勇
                     if (node.nodeName === "#text") {
                         node.textContent = cnItem(node.textContent, node);
                         //console.log(node);
-                    } else if (node.nodeName !== "SCRIPT" && node.nodeName !== "STYLE" && node.nodeName !== "TEXTAREA" && node.nodeName !== "BR") {
+                    } else if (node.nodeName !== "SCRIPT" && node.nodeName !== "STYLE" && node.nodeName !== "TEXTAREA") {
                         if (!node.childNodes || node.childNodes.length == 0) {
 							if (node.innerText)
 								node.innerText = cnItem(node.innerText, node);
                         } else {
                             TransSubTextNode(node);
-                            transTaskMgr.doTask();
                         }
                     }
                 }
             }
         }
+        transTaskMgr.doTask();
         observer.observe(targetNode, observer_config);
         //window.afterTransTime = performance.now();
         //console.log("捕获到页面变化并执行汉化，耗时" + (afterTransTime - beforeTransTime) + "毫秒");
