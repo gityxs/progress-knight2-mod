@@ -6,6 +6,11 @@ onerror = () => {
     }, 30 * 1000)
 }
 
+window.addEventListener('resize', function(event) {
+    onResize(event.target.outerWidth)
+}, true);
+
+
 function addMultipliers() {
     for (const taskName in gameData.taskData) {
         const task = gameData.taskData[taskName]
@@ -210,7 +215,7 @@ function setCustomEffects() {
         }
         else if (gameData.requirements["Speed speed speed"].isCompleted()) {
             mult = 7.5275 * Math.exp(0.0053 * (gameData.requirements["Strong Hope"].isCompleted() ? gameData.rebirthFiveTime
-                : gameData.rebirthThreeTime)) * (Math.log(getUnpausedGameSpeed()) / Math.log(2))
+                : gameData.rebirthThreeTime)) * (Math.log(getUnpausedGameSpeed()) / Math.log(2))            
             if (mult == Infinity)
                 mult = 1e308
             mult = softcap(mult, 10000000, 0.01)
@@ -220,7 +225,7 @@ function setCustomEffects() {
             if (kickin < 0.15)
                 kickin = 0.15
 
-            mult = 1 + (gameData.rebirthThreeTime / (7750 * kickin)) * (Math.log(getUnpausedGameSpeed()) / Math.log(2))
+            mult = 1 + ((gameData.rebirthThreeTime * (gameData.requirements["Angry Heroes"].isCompleted() ? 10 : 1)) / (7750 * kickin)) * (Math.log(getUnpausedGameSpeed()) / Math.log(2))            
             mult = softcap(mult, 200)
         }
 
@@ -282,6 +287,8 @@ function getEvilXpGain() {
 }
 
 function getEssence() {
+    if (gameData.essence == Infinity || gameData.essence > 1e308)
+        return 1e308
     return gameData.essence
 }
 
@@ -692,6 +699,20 @@ function setEnableKeybinds(enableKeybinds) {
     selectElementInGroup("EnableKeybinds", enableKeybinds ? 0 : 1)
 }
 
+function resetEvilPerks(){
+    if (gameData.requirements["God's Blessings"].isCompleted())
+        return;
+    gameData.evil_perks_points = 0
+    gameData.evil_perks.receive_essence = 0
+    
+    if (!gameData.evil_perks_keep){
+        gameData.evil_perks.reduce_eye_requirement = 0
+        gameData.evil_perks.reduce_evil_requirement = 0
+        gameData.evil_perks.reduce_the_void_requirement = 0
+        gameData.evil_perks.reduce_celestial_requirement = 0
+    }
+}
+
 function rebirthOne() {
     if (!gameData.requirements["Rebirth button 1"].isCompleted())
         return;
@@ -710,6 +731,8 @@ function rebirthTwo() {
 
     gameData.rebirthTwoCount += 1
     gameData.evil += getEvilGain()
+
+    resetEvilPerks()
 
     if (gameData.stats.fastest2 == null || gameData.rebirthTwoTime < gameData.stats.fastest2)
         gameData.stats.fastest2 = gameData.rebirthTwoTime
@@ -731,9 +754,11 @@ function rebirthThree() {
 
     gameData.rebirthThreeCount += 1
     gameData.essence += getEssenceGain()
-    if (gameData.essence == Infinity)
+    if (gameData.essence == Infinity || gameData.essence > 1e308)
         gameData.essence = 1e308
     gameData.evil = evilTranGain()
+
+    resetEvilPerks()
 
 
     if (gameData.stats.fastest3 == null || gameData.rebirthThreeTime < gameData.stats.fastest3)
@@ -761,6 +786,8 @@ function rebirthFour() {
     gameData.essence = 0
     gameData.evil = 0
     gameData.dark_matter += getDarkMatterGain()
+    gameData.evil_perks_points = 0
+    gameData.evil_perks.receive_essence = 0
 
     if (gameData.metaverse.challenge_altar == 0 && gameData.perks.save_challenges == 0)  {
         for (const challenge in gameData.challenges) {
@@ -794,6 +821,8 @@ function rebirthFive() {
     gameData.perks_points += getMetaversePerkPointsGain()
     gameData.essence = 0
     gameData.evil = 0
+    gameData.evil_perks_points = 0
+    gameData.evil_perks.receive_essence = 0
     gameData.dark_matter = 0
     gameData.dark_orbs = 0
     gameData.dark_matter_shop.dark_orb_generator = 0
@@ -891,7 +920,7 @@ function applyMilestones() {
                 gameData.essence = 1
             if (gameData.essence < getEssenceGain() * 10)
                 gameData.essence *= Math.pow(1.002, 1)
-            if (gameData.essence == Infinity)
+            if (gameData.essence == Infinity || gameData.essence > 1e308)
                 gameData.essence = 1e308
         }
     }
@@ -906,6 +935,8 @@ function rebirthReset(set_tab_to_jobs = true) {
             || gameData.settings.selectedTab == Tab.MILESTONES && gameData.essence > 0
             || gameData.settings.selectedTab == Tab.DARK_MATTER && gameData.dark_matter > 0
             || gameData.settings.selectedTab == Tab.REBIRTH
+            || gameData.settings.selectedTab == Tab.EVILPERKS 
+            || gameData.settings.selectedTab == Tab.INFO 
         ) {
             // do not switch tab
         }
@@ -976,18 +1007,20 @@ function getLifespan() {
 
 function isAlive() {
     const condition = gameData.days < getLifespan() || getLifespan() == Infinity
-    const deathText = document.getElementById("deathText")
+
     if (!condition) {
-        gameData.days = getLifespan()
-        deathText.classList.remove("hidden")
+        gameData.days = getLifespan()        
     }
-    else {
-        deathText.classList.add("hidden")
+
+    if (!in_offline_progress){
+        const deathText = document.getElementById("deathText")
+        if (!condition)  
+            deathText.classList.remove("hidden")        
+        else 
+            deathText.classList.add("hidden")        
     }
     return condition && !tempData.hasError
 }
-
-
 
 function canSimulate() {
     return !gameData.paused && isAlive()
@@ -1143,6 +1176,7 @@ function replaceSaveDict(dict, saveDict) {
 }
 
 function saveGameData() {
+    gameData.save_date_time = Date.now()
     localStorage.setItem("gameDataSave", JSON.stringify(gameData))
 }
 
@@ -1237,6 +1271,7 @@ function loadGameData() {
 
             // Remove invalid active misc items
             gameData.currentMisc = gameData.currentMisc.filter((element) => element instanceof Item)
+            
         }
     } catch (error) {
         console.error(error)
@@ -1247,7 +1282,62 @@ function loadGameData() {
     assignMethods()
 }
 
+var intervalID = 0;
+var totalTimes = 0;
+var executedTimes = 0;
+var in_offline_progress=false;
+var lastUpdate = 0;
+
+function setIntervalX(callback, delay, repetitions) {
+    var x = 0;
+    intervalID = window.setInterval(function () {
+
+       callback();
+
+       if (++x >= repetitions) {
+           stopOffline()
+       }
+    }, delay);
+}
+
+function calc_offline_progress(ms){
+    if (ms > 10000){
+        in_offline_progress = true
+        intervalID = 0
+        totalTimes = 0
+        executedTimes = 0        
+        var offline_max_time = 3600 * 1000 // 1 hour
+        if (ms > offline_max_time)
+            ms = offline_max_time
+        const updates_in_one_tick = 100
+        totalTimes = ms / (1000 / updateSpeed)
+        var times = totalTimes / updates_in_one_tick
+        document.getElementById("offline_progress").hidden = false
+        document.getElementById("mainarea").hidden = true
+        setIntervalX(() => update_times(updates_in_one_tick), 20, times)        
+    }
+}
+
+function update_times(times){
+    for (var i = 0; i < times; i++) {
+        update(false)
+        executedTimes++
+        document.getElementById("offline_time").textContent = Math.floor(executedTimes*100/totalTimes) + "%"
+        if (!isAlive())
+            stopOffline()
+    }   
+}
+
+function stopOffline(){
+    window.clearInterval(intervalID);
+    document.getElementById("offline_progress").hidden = true
+    document.getElementById("mainarea").hidden = false
+    in_offline_progress = false;
+}
+
 function update(needUpdateUI = true) {
+    if (in_offline_progress && needUpdateUI)
+        return
     makeHeroes()
     increaseRealtime()
     increaseDays()
@@ -1263,12 +1353,14 @@ function update(needUpdateUI = true) {
     }
     increaseCoins()
 
+    gameData.evil_perks_points += applySpeed(getEvilPerksGeneration())
     gameData.dark_orbs += applySpeed(getDarkOrbGeneration())
     gameData.hypercubes += applySpeed(getHypercubeGeneration())
     if (gameData.hypercubes > getHypercubeCap())
         gameData.hypercubes = getHypercubeCap()
 
     applyMilestones()
+    applyEvilPerks()
     applyPerks()
     updateStats()
     if (needUpdateUI && !document.hidden)
@@ -1286,7 +1378,7 @@ function applyPerks() {
     if (gameData.perks.instant_essence == 1) {
         if (gameData.essence < getEssenceGain() * 10)
             gameData.essence = getEssenceGain() * 10
-        if (gameData.essence == Infinity)
+        if (gameData.essence == Infinity || gameData.essence > 1e308)
             gameData.essence = 1e308
     }
 
@@ -1294,6 +1386,33 @@ function applyPerks() {
         if (gameData.dark_matter < getDarkMatterGain() * 10)
             gameData.dark_matter = getDarkMatterGain() * 10
     }
+}
+
+function applyEvilPerks() {
+    if (!gameData.evil_perks_keep && gameData.requirements["Dark Orbiter"].isCompleted())
+        gameData.evil_perks_keep = true
+
+
+    gameData.requirements["Rebirth note 0"].requirements[0].requirement = getAge0Requirement()
+    gameData.requirements["Rebirth note 1"].requirements[0].requirement = getAge1Requirement()
+    gameData.requirements["Rebirth note 2"].requirements[0].requirement = getEyeRequirement()
+    gameData.requirements["Rebirth button 1"].requirements[0].requirement = getEyeRequirement()
+    gameData.requirements["key1"].requirements[0].requirement = getEyeRequirement()
+
+    gameData.requirements["Rebirth note 3"].requirements[0].requirement = getEvilRequirement()
+    gameData.requirements["Rebirth button 2"].requirements[0].requirement = getEvilRequirement()
+    gameData.requirements["Rebirth stats evil"].requirements[0].requirement = getEvilRequirement()    
+    gameData.requirements["key2"].requirements[0].requirement = getEvilRequirement()
+
+    gameData.requirements["Rebirth note 4"].requirements[0].requirement = getVoidRequirement()
+    gameData.requirements["Void Manipulation"].requirements[0].requirement = getVoidRequirement()
+    gameData.requirements["The Void"].requirements[0].requirement = getVoidRequirement()
+    gameData.requirements["Corrupted"].requirements[0].requirement = getVoidRequirement()
+
+    gameData.requirements["Galactic Council"].requirements[0].requirement = getCelestialRequirement()
+    gameData.requirements["Celestial Powers"].requirements[0].requirement = getCelestialRequirement()
+    gameData.requirements["Rebirth note 5"].requirements[0].requirement = getCelestialRequirement()
+    gameData.requirements["Eternal Wanderer"].requirements[0].requirement = getCelestialRequirement()
 }
 
 function updateRequirements() {
@@ -1401,12 +1520,8 @@ function isNextDarkMagicSkillInReach() {
             }
         }
     }
-
     return false
 }
-
-
-
 
 // Loads the game save, does the initial render and starts the game update and render loop.
 
@@ -1433,9 +1548,18 @@ loadGameData()
 
 initializeUI()
 
+
 setCustomEffects()
 addMultipliers()
 
+if ("save_date_time" in gameData && gameData.save_date_time > 0) {
+   calc_offline_progress(Date.now() - gameData.save_date_time);            
+}
+
+if (!in_offline_progress)
+    document.getElementById("mainarea").hidden = false
+
+onResize(window.outerWidth)
 update()
 
 setTab(gameData.settings.selectedTab)
@@ -1449,6 +1573,10 @@ var gameloop = setInterval(function() {
     if (ticking) return;
     ticking = true;
     update();
+    var ms = Date.now() - lastUpdate
+    if (lastUpdate != 0 && ms >= 10000 && !in_offline_progress)
+        calc_offline_progress(ms)
+    lastUpdate = Date.now()
 
     // fps for debug only
     //var thisFrameTime = (thisLoop = new Date) - lastLoop;

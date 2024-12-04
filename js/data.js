@@ -6,6 +6,15 @@
     days: 365 * 14,
     totalDays: 0,
     evil: 0,
+    evil_perks_points: 0,
+    evil_perks: {
+        reduce_eye_requirement: 0,
+        reduce_evil_requirement: 0,
+        reduce_the_void_requirement: 0,
+        reduce_celestial_requirement: 0,
+        receive_essence: 0
+    },
+    evil_perks_keep: false,
     essence: 0,
     dark_matter: 0,
     dark_orbs: 0,
@@ -55,7 +64,7 @@
         currencyNotation: 0,
         numberNotation: 1,
         layout: 1,
-        fontSize: 3,
+        fontSize: 0,
         selectedTab: 'jobs',
         enableKeybinds: false,
     },
@@ -119,6 +128,8 @@
     boost_cooldown: 0.0,
     boost_timer: 0.0,
     boost_active: false,
+
+    save_date_time: 0
 }
 
 var tempData = {}
@@ -130,7 +141,7 @@ const baseLifespan = 365 * 70
 const baseGameSpeed = 4
 const heroIncomeMult = 2.5e18
 
-const permanentUnlocks = ["Quick task display", "Rebirth tab", "Dark Matter", "Dark Matter Skills", "Dark Matter Skills2", "Metaverse", "Metaverse Perks", "Metaverse Perks Button", "Congratulations"]
+const permanentUnlocks = ["Quick task display", "Evil perks", "Rebirth tab", "Dark Matter", "Dark Matter Skills", "Dark Matter Skills2", "Metaverse", "Metaverse Perks", "Metaverse Perks Button", "Congratulations"]
 const metaverseUnlocks = ["Reduce Boost Cooldown", "Increase Boost Duration", "Increase Hypercube Gain", "Gain evil at new transcension",
     "Essence gain multiplier", "Challenges are not reset", "Dark Matter gain multiplier"]
 
@@ -146,8 +157,8 @@ const jobBaseData = {
     "Footman": { name: "Footman", maxXp: 1000, income: 50, heroxp: 52 },
     "Veteran footman": { name: "Veteran footman", maxXp: 10000, income: 120, heroxp: 53 },
     "Centenary": { name: "Centenary", maxXp: 100000, income: 300, heroxp: 54 },
-    "Knight": { name: "Knight", maxXp: 1000000, income: 1000, heroxp: 63 },
-    "Veteran Knight": { name: "Veteran Knight", maxXp: 7500000, income: 3000, heroxp: 63 },
+    "Knight": { name: "Knight", maxXp: 1000000, income: 1000, heroxp: 57 },
+    "Veteran Knight": { name: "Veteran Knight", maxXp: 7500000, income: 3000, heroxp: 61 },
     "Holy Knight": { name: "Holy Knight", maxXp: 4e7, income: 5000, heroxp: 64 },
     "Lieutenant General": { name: "Lieutenant General", maxXp: 1.5e8, income: 50000, heroxp: 77 },
 
@@ -518,6 +529,9 @@ const requirementsBaseData = {
     "Dark Matter Skills": new EssenceRequirement(["#skillTreeTabTabButton"], [{ requirement: 1e20 }]),
     "Dark Matter Skills2": new EssenceRequirement(["#skillTreePage"], [{ requirement: 1e20 }]),
 
+    // Evil perks
+    "Evil perks": new EvilRequirement(["#evilperksTabButton"], [{requirement : 1}]),
+
     // Challenges
     "Challenges": new EvilRequirement(["#challengesTabButton"], [{ requirement: 10000 }]),
     "Challenge_an_unhappy_life": new EvilRequirement(["#anUnhappyLifeChallenge"], [{ requirement: 10000 }]),
@@ -534,7 +548,7 @@ const requirementsBaseData = {
     "Increase Boost Duration": new HypercubeRequirement(["#IncreaseBoostDurationAltar"], [{ requirement: 2500 }]),
     "Gain evil at new transcension": new HypercubeRequirement(["#EvilAltar"], [{ requirement: 50000000 }]),
     "Essence gain multiplier": new HypercubeRequirement(["#EssenceAltar"], [{ requirement: 500000000 }]),
-    "Challenges are not reset": new HypercubeRequirement(["#ChallengeAltar"], [{ requirement: 1e15 }]),
+    "Challenges are not reset": new HypercubeRequirement(["#ChallengeAltar"], [{ requirement: 1e12 }]),
     "Dark Matter gain multiplier": new HypercubeRequirement(["#DarkMaterAltar"], [{ requirement: 1e17 }]),
 
     // Metaverse Perks
@@ -548,6 +562,9 @@ const requirementsBaseData = {
     "key3": new TaskRequirement(["#key3"], [{ task: "Cosmic Recollection", requirement: 1 }]),
     "key4": new EssenceRequirement(["#key4"], [{ requirement: 5e10 }]),
     "key5": new EssenceRequirement(["#key5"], [{ requirement: 1e90 }]),
+
+    // Evil perks
+    "Evil perk essence": new EssenceRequirement(["#evilperk5"], [{ requirement: 150000000 }]),
 
     "Congratulations": new EssenceRequirement(["#Congratulations"], [{ requirement: 1e300 }]),
 }

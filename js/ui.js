@@ -59,6 +59,10 @@ function updateUI() {
         renderShop()
     }
 
+    if (currentTab == Tab.EVILPERKS) {
+        renderEvilPerks()
+    }
+
     if (currentTab == Tab.CHALLENGES)
         renderChallenges()
 
@@ -75,6 +79,9 @@ function updateUI() {
 
     if (currentTab == Tab.SETTINGS)
         renderSettings()
+
+    if (currentTab == Tab.REBIRTH)
+        renderRebirth()
 }
 
 function renderSideBar() {
@@ -268,8 +275,8 @@ function renderJobs() {
         renderProgressBar(task, progressFill, progressBar)
 
         const valueElement = task.querySelector(".value", row)
-        valueElement.querySelector(".income").style.display = true
-        valueElement.querySelector(".effect").style.display = false
+        valueElement.querySelector(".income").style.display = 'table-cell'
+        valueElement.querySelector(".effect").style.display = 'none'
 
         formatCoins(task.getIncome(), valueElement.querySelector(".income"))
     }
@@ -307,8 +314,8 @@ function renderSkills() {
         renderProgressBar(task, progressFill, progressBar)
 
         const valueElement = task.querySelector(".value", row)
-        valueElement.querySelector(".income").style.display = false
-        valueElement.querySelector(".effect").style.display = true
+        valueElement.querySelector(".income").style.display = 'none'
+        valueElement.querySelector(".effect").style.display = 'table-cell'
 
         valueElement.querySelector(".effect").textContent = task.getEffectDescription()
     }
@@ -335,6 +342,96 @@ function renderShop() {
         active.style.backgroundColor = gameData.currentMisc.includes(item) || item == gameData.currentProperty ? color : "white"
         row.querySelector(".effect").textContent = item.getEffectDescription()
         formatCoins(item.getExpense(), row.querySelector(".expense"))
+    }
+}
+
+function renderRebirth() {
+
+    document.getElementById("age0").textContent = getAge0Requirement() 
+    document.getElementById("age1").textContent = getAge1Requirement() 
+    document.getElementById("age1a").textContent = getEyeRequirement()
+
+    const age2req = getEvilRequirement()
+    let age2 = ""
+    if (age2req == 200)
+        age2 = "2 whole centuries"
+    else if (age2req == 100)
+        age2 = "1 century"
+    else
+        age2 = age2req + " years"
+
+    document.getElementById("age2").textContent = age2 
+    document.getElementById("age2a").textContent = age2req
+
+
+    const age3req = getVoidRequirement()
+    let age3 = ""
+    if (age3req == 1000)
+        age3 = "a millennium"
+    else if (age3req > 100)
+        age3 = (age3req / 100) + " whole centuries"
+    else
+        age3 = "1 century"
+    document.getElementById("age3").textContent = age3 
+
+    var ones = new Array('', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten');
+
+    let age3a = ""
+    if (age3req == 1000)
+        age3a = "thousand "
+    else
+        age3a = ones[age3req / 100] + " hundred "    
+
+    document.getElementById("age3a").textContent = age3a
+
+    const age4req = getCelestialRequirement()
+    let age4 = ""
+    if (age4req == 1000)
+        age4 = "a millennium"
+    else
+        age4 = ones[age4req / 1000] + " millennia"    
+
+    document.getElementById("age4").textContent = age4    
+    document.getElementById("age4a").textContent = age4.charAt(0).toUpperCase() + age4.slice(1)   
+}
+
+function renderEvilPerks() {
+    document.getElementById("eppInfo").textContent = (gameData.essence > 0) ? "Evil and Essence" : "Evil"
+    document.getElementById("evilperksDisplay").textContent = format(gameData.evil_perks_points)
+    document.getElementById("evilperksGainDisplay").textContent = format(getEvilPerksGeneration() * 365)
+
+    document.getElementById("eyeReq").textContent = getEyeRequirement()
+    document.getElementById("eyeReduceCount").textContent = format(gameData.evil_perks.reduce_eye_requirement, 0)
+    document.getElementById("evilperkCost1").textContent = format(getEvilPerkCost(1))
+
+
+    document.getElementById("evilReq").textContent = getEvilRequirement()
+    document.getElementById("evilReduceCount").textContent = format(gameData.evil_perks.reduce_evil_requirement, 0)
+    document.getElementById("evilperkCost2").textContent = format(getEvilPerkCost(2))
+
+    document.getElementById("voidManipulationReq").textContent = getVoidRequirement()
+    document.getElementById("voidManipulationReduceCount").textContent = format(gameData.evil_perks.reduce_the_void_requirement, 0)
+    document.getElementById("evilperkCost3").textContent = format(getEvilPerkCost(3))
+
+    document.getElementById("celestialReq").textContent = getCelestialRequirement()
+    document.getElementById("celestialReduceCount").textContent = format(gameData.evil_perks.reduce_celestial_requirement, 0)
+    document.getElementById("evilperkCost4").textContent = format(getEvilPerkCost(4))
+    
+    document.getElementById("essenceReward").textContent = format(getEssenceReward())
+    document.getElementById("essenceRewardPercent").textContent = format(getEssenceRewardPercent(),0)    
+    document.getElementById("essenceReceiveCount").textContent = format(gameData.evil_perks.receive_essence, 0)
+    document.getElementById("evilperkCost5").textContent = format(getEvilPerkCost(5))
+    
+    for (var i = 1; i <= 5; i++) {
+        if (gameData.evil_perks_points >= getEvilPerkCost(i)){
+            document.getElementById("evilperk"+i).classList.remove("evilperkoff")
+            document.getElementById("evilperk"+i).classList.remove("evilperkbought")
+        }
+        else if (hasEvilPerk(i)){
+            document.getElementById("evilperk"+i).classList.add("evilperkbought")            
+        }
+        else
+            document.getElementById("evilperk"+i).classList.add("evilperkoff")
     }
 }
 
@@ -532,8 +629,6 @@ function renderPerks() {
         document.getElementById("mppInfo2").hidden = true
     }
 
-
-
     // PerkButtons
     const total_mpp = getTotalPerkPoints()
     let hide_next = false
@@ -594,6 +689,8 @@ function renderDarkMatter() {
 
     if (gameData.dark_matter_shop.a_miracle)
         document.getElementById("aMiracleBuyButton").classList.add("hidden")
+    else
+        document.getElementById("aMiracleBuyButton").classList.remove("hidden")
 
     if (getDarkOrbGeneration() != Infinity)
         document.getElementById("darkOrbGeneratorBuyButton").classList.remove("hidden")
@@ -758,7 +855,8 @@ function createHeaderRow(templates, categoryType, categoryName) {
 
 
     if (categoryType == jobCategories || categoryType == skillCategories) {
-        headerRow.getElementsByClassName("valueType")[0].textContent = categoryType == jobCategories ? "Income/day" : "Effect"
+        headerRow.getElementsByClassName("valueType")[0].textContent = categoryType == jobCategories ? "Income" : "Effect"
+        headerRow.getElementsByClassName("valueType")[0].style.width = categoryType == jobCategories ? "8em" : "18em"
     }
 
     headerRow.style.backgroundColor = headerRowColors[categoryName]
@@ -976,7 +1074,7 @@ function getHeroicRequiredTooltip(task) {
 function setStickySidebar(sticky) {
     gameData.settings.stickySidebar = sticky;
     settingsStickySidebar.checked = sticky;
-    info.style.position = sticky ? 'sticky' : 'initial';
+    infoQuickBar.style.position = sticky ? 'sticky' : 'initial';
 }
 
 function selectElementInGroup(group, index) {
@@ -987,14 +1085,41 @@ function selectElementInGroup(group, index) {
     elements[index].classList.add("selected")
 }
 
+function onResize(width) {
+    var qb = document.getElementById("infoQuickBar")
+
+    if (width > 600) {
+        document.getElementById("infoTabButton").classList.add("hidden")
+        document.getElementById("info").classList.add("hidden")
+
+        qb.appendChild(document.getElementById("infoPage"))
+        qb.hidden = false
+        const currentTab = gameData.settings.selectedTab
+        if (currentTab == Tab.INFO) {
+            setTab(Tab.HERO)
+        }   
+    }
+    else {
+        document.getElementById("info").classList.remove("hidden")
+        document.getElementById("infoTabButton").classList.remove("hidden")
+        document.getElementById("info").appendChild(document.getElementById("infoPage"))
+        qb.hidden = true
+        
+    }
+}
+
+
 function setLayout(id) {
     gameData.settings.layout = id
-    if (id == 0) {
+   
+    if (id == 0) { // WIDE
         document.getElementById("skillsTabButton").classList.add("hidden")
         document.getElementById("shopTabButton").classList.add("hidden")
+        
 
         document.getElementById("skills").classList.add("hidden")
         document.getElementById("shop").classList.add("hidden")
+        
 
         document.getElementById("tabcolumn").classList.add("plain-tab-column")
         document.getElementById("tabcolumn").classList.remove("tabs-tab-column")
@@ -1002,23 +1127,40 @@ function setLayout(id) {
         document.getElementById("maincolumn").classList.add("plain-main-column")
         document.getElementById("maincolumn").classList.remove("tabs-main-column")
 
+        //document.getElementById("hero").appendChild(document.getElementById("jobPage"))
+        
+       
+        
+        document.getElementById("jobs").appendChild(document.getElementById("jobPage"))
         document.getElementById("jobs").appendChild(document.getElementById("skillPage"))
         document.getElementById("jobs").appendChild(document.getElementById("itemPage"))
+
+        document.getElementById("jobPage").style.flex = 0.88
+        document.getElementById("skillPage").style.flex = 1.13
+        document.getElementById("itemPage").style.flex = 0.82
     } else {
         document.getElementById("skillsTabButton").classList.remove("hidden")
         document.getElementById("shopTabButton").classList.remove("hidden")
+        
 
         document.getElementById("skills").classList.remove("hidden")
         document.getElementById("shop").classList.remove("hidden")
+        
 
         document.getElementById("tabcolumn").classList.add("tabs-tab-column")
         document.getElementById("tabcolumn").classList.remove("plain-tab-column")
 
         document.getElementById("maincolumn").classList.add("tabs-main-column")
         document.getElementById("maincolumn").classList.remove("plain-main-column")
+       
 
+        
         document.getElementById("skills").appendChild(document.getElementById("skillPage"))
         document.getElementById("shop").appendChild(document.getElementById("itemPage"))
+        
+        document.getElementById("jobPage").style.flex = 1
+        document.getElementById("skillPage").style.flex = 1
+        document.getElementById("itemPage").style.flex = 1
     }
 
     // dark matter layout
@@ -1141,12 +1283,14 @@ const Tab = Object.freeze({
     JOBS: "jobs",
     SKILLS: "skills",
     SHOP: "shop",
+    EVILPERKS: "evilperks",
     CHALLENGES: "challenges",
     MILESTONES: "milestones",
     REBIRTH: "rebirth",
     DARK_MATTER: "darkMatter",
     METAVERSE: "metaverse",
-    SETTINGS: "settings"
+    SETTINGS: "settings",
+    INFO: "info"
 })
 
 /**

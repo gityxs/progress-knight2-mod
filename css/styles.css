@@ -51,6 +51,7 @@
     padding: 0.4em 0.8em !important;
 }
 
+
 /*main*/
 
 body {
@@ -312,8 +313,9 @@ button:focus {
 .column {
     display: flex;
     flex-direction: column;
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: hidden;
+    width: 100%;
 }
 
 .quick-bar {
@@ -321,47 +323,40 @@ button:focus {
 }
 
 .tabs-tab-column {
-    width: 65em;
     height: auto;
 }
 
 .tabs-main-column {
-    width: 65em;
     height: auto;
     float: right;
     margin-bottom: 4em;
 }
 
 .plain-tab-column {
-    width: 164em;
     height: auto;
 }
 
 .plain-main-column {
-    width: 164em;
     height: auto;
     float: right;
     margin-bottom: 4em;
 }
 
 .page-column {
-    width: 56em;
     height: auto;
 }
 
 .settings-main-column {
-    width: 56em;
     height: auto;
     float: right;
     margin-bottom: 4em;
 }
 
 .baritem {
-    width: 8.1rem;
+    width: 7em;
     height: auto;
     text-align: center;
 }
-
 
 .outer-circle {
     width: 1.7em;
@@ -391,8 +386,7 @@ button:focus {
     padding-bottom: 0.5em;
 }
 
-.perk {
-    background-color: #EA4C89;
+.perk {    
     border-style: solid;
     border-width: 0.1em;
     box-sizing: border-box;
@@ -417,13 +411,46 @@ button:focus {
     margin: 0.6em 0.7em 0.6em 0.7em;    
 }
 
-.perk:hover {
+.metaperk{
+    background-color: #EA4C89;
+}
+
+.evilperk{
+    background-color: rgb(220, 80, 80);
+    height: 6em;
+    width: 100%;
+}
+.evilperk:hover{
+    background-color: rgb(240, 0, 0);
+}
+
+.evilperkbought{
+    background-color: rgb(100, 0, 0);
+}
+
+.evilperkbought:hover{
+    background-color: rgb(100, 0, 0);
+}
+
+.evilperkoff{
+    background-color: rgb(128, 128, 128);
+}
+
+.evilperkoff:hover{
+    background-color: rgb(128, 128, 128);
+}
+
+.metaperk:hover {
     background-color: #F082AC;
 }
 
+
 .perk-grid {
     display: grid;
-    grid-template-columns: 27em 27em
+}
+
+@media (min-width: 600px) {
+  .perk-grid { grid-template-columns: repeat(2, 27em); }
 }
 
 .active-perk {
@@ -518,4 +545,8 @@ button:focus {
     border: 0.01em solid red;
     border-radius: 0.5em;
     animation: currency-rainbow 40s infinite;
+}
+
+.page {
+    max-width: 800px;
 }
