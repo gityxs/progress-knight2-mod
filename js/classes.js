@@ -1,158 +1,164 @@
-class Task {
+class Job extends Task {
+
+    /** @param {JobBaseData} baseData */
+    constructor(baseData) {
+        super(baseData)
+        this.baseData = /** @type {JobBaseData} */ (this.baseData)
+
+        /** @type {(() => number)[]} Dynamic income calculation functions */
+        this.incomeFuncs = []
+
+        /** @type {Skill[]} List of skills that generate income */
+        this.incomeTasks = [];
+
+        /** @type {Item[]} List of items in the inventory providing passive income */
+        this.incomeItems = [];
+    }
+
+    getIncome() {
+        let income = this.baseData.income
+
+        income *= (this.isHero ? heroIncomeMult
+            * (this.baseData.heroxp > 78 ? 1e6 : 1)
+            * (this.baseData.heroxp > 130 ? 1e5 : 1)
+            : 1)
+
+        income *= getChallengeBonus("rich_and_the_poor")
+
+        income *= 1 + log10(this.level + 1);
+
+        const funcs = this.incomeFuncs;
+        const fLen = funcs.length;
+        for (let i = 0; i < fLen; i++) {
+            income *= funcs[i]();
+        }
+
+        const tasks = this.incomeTasks;
+        const tLen = tasks.length;
+        for (let i = 0; i < tLen; i++) {
+            income *= tasks[i].getEffect();
+        }
+
+        return gameData.active_challenge == "rich_and_the_poor" || gameData.active_challenge == "the_darkest_time"
+            ? pow(income, 0.35)
+            : income
+    }
+
+}
+
+class Skill extends Task {
+
+    /** @param {SkillBaseData} baseData */
+    constructor(baseData) {
+        super(baseData)
+        this.baseData = /** @type {SkillBaseData} */ (this.baseData)
+        this.boundEffect = () => { return 1 }
+    }
+
+    getEffect() {
+        let effect = this.baseData.effect
+        return 1 + effect * (this.isHero ? 1000 * this.level + 8000 : this.level)
+    }
+
+    getEffectDescription() {
+        let effect = this.getEffect()
+        return "x" + format(effect, 2) + " " + this.baseData.description
+    }
+}
+
+class Item {
+    /** @param {ItemBaseData} baseData */
     constructor(baseData) {
         this.baseData = baseData
         this.name = baseData.name
-        this.level = 0
-        this.maxLevel = 0
-        this.xp = 0
-        this.xpBigInt = BigInt(0)
+        this.effect = baseData.effect
+        this.heroeffect = baseData.heroeffect
+        this.description = baseData.description
+        this.expense = baseData.expense
+        this.heromult = baseData.heromult
         this.isHero = false
-        this.isFinished = false
         this.unlocked = false
+        this.isMisc = itemCategories["Misc"]?.includes(this.name) || false;
+        this.isProperty = itemCategories["Properties"]?.includes(this.name) || false;
+        this.heroExpenseMult = 4 * pow(10, this.heromult) * heroIncomeMult
+        this.row = getQuerySelector(this.name)
 
-        this.xpMultipliers = []
+        /** @type {Skill[]} */
+        this.expenseSkills = []
 
-        this.elementsCache = {}
+        /** @type {() => number} */
+        this.boundEffect = () => { return 1 }
     }
 
-    toJSON() {
-        return {
-            baseData: this.baseData,
-            name: this.name,
-            level: this.level,
-            maxLevel: this.maxLevel,
-            xp: this.xp,
-            xpBigInt: bigIntToExponential(this.xpBigInt),
-            isHero: this.isHero,
-            isFinished: this.isFinished,
-            unlocked: this.unlocked
+    getEffect() {
+        const currentMisc = gameData.currentMisc;
+        const currentProp = gameData.currentProperty;
+
+        if (this.isHero) {
+            if (this.isMisc && currentMisc.includes(this)) {
+                this.unlocked = true;
+                return this.effect * this.heroeffect;
+            }
+
+            if (this.isProperty) {
+                if (currentProp === this) {
+                    this.unlocked = true;
+                    return this.heroeffect;
+                }
+                return 1;
+            }
+
+            return this.effect;
+        } else {
+            if (currentProp !== this && !currentMisc.includes(this)) {
+                return 1;
+            }
+
+            this.unlocked = true;
+            return this.effect;
         }
     }
 
-    getMaxXp() {
-        const maxXp = (this.isHero ? Math.pow(10, this.baseData.heroxp) : 1) * this.baseData.maxXp * (this.level + 1) * Math.pow(this.isHero ? 1.08 : 1.01, this.level)
+    getEffectDescription() {
+        let description = this.description
+        let effect = this.effect
 
-        if (isNaN(maxXp) || maxXp == Infinity || maxXp > 1e305) {
-            this.isFinished = true
-        }
+        if (this.isHero) {
+            if (this.isMisc) {
+                effect *= this.heroeffect
+            }
 
-        return maxXp
-    }
-
-    getMaxBigIntXp() {
-        const maxXp = this.getMaxXp() == Infinity ? BigInt(1e305) : BigInt(Math.floor(this.getMaxXp()));
-
-        if (maxXp < 1e305)
-            return maxXp
-
-        return maxXp * 2n ** (BigInt(this.level) / 120n) * (2n ** (BigInt(this.baseData.heroxp) / 9n))
-    }
-
-    getXpLeft() {
-        return this.getMaxXp() - this.xp
-    }
-
-    getMaxLevelMultiplier() {
-        if (gameData.active_challenge == "dance_with_the_devil" || gameData.active_challenge == "the_darkest_time") {
-           return (10 / (this.maxLevel + 1))
+            if (this.isProperty) {
+                description = "Happiness"
+                effect = this.heroeffect
+            }
         }
         else {
-            let effect = gameData.taskData['Cosmic Recollection'].getEffect();
-            effect = effect == 0 ? 1 : effect
-            return (this.baseData.heroxp < 1000) ? 1 + this.maxLevel / 10 : 1 + this.maxLevel / effect
+            if (this.isProperty) description = "Happiness"
         }
+
+        return "x" + format(effect) + " " + description
     }
 
-    getXpGain() {
-        return (this.isHero ? getHeroXpGainMultipliers(this) : 1) * applyMultipliers(10, this.xpMultipliers)
-    }
+    getExpense() {
+        let expense = this.expense
 
-    getXpGainBigInt() {
-        let xpGain = BigInt(Math.floor(this.isHero ? getHeroXpGainMultipliers(this) : 1))
+        expense *= (this.isHero ? this.heroExpenseMult : 1)
 
-        this.xpMultipliers.forEach(multiplier => {
-            xpGain *= BigInt(Math.ceil(multiplier()))
-        })
-
-        return xpGain
-    }
-
-    getXpGainFormatted() {
-        if (this.isFinished)
-            return bigIntToExponential(this.getXpGainBigInt())
-        return format(this.getXpGain())
-    }
-
-    getXpLeftFormatted() {
-        if (this.isFinished)
-            return bigIntToExponential(this.getMaxBigIntXp() - this.xpBigInt)
-        return format(this.getXpLeft())
-    }
-
-    increaseXp() {
-        if (this.isFinished) {
-            this.xpBigInt += applySpeedOnBigInt(this.getXpGainBigInt())
-
-            if (this.xpBigInt >= this.getMaxBigIntXp()) {
-                let excess = this.xpBigInt - this.getMaxBigIntXp()
-
-                let iterations = 0
-                while (excess >= 0n) {
-                    iterations += 1
-
-                    // This amount is way lower because calculations with a BigInt are really expensive.
-                    // Probably want to look into more optimizations.
-                    if (iterations > 300)
-                        excess = -1n
-
-                    this.level += 1
-                    this.unlocked = true
-                    excess -= this.getMaxBigIntXp()
-                }
-                this.xpBigInt = this.getMaxBigIntXp() + excess
-            }
-        } else {
-            this.xp += applySpeed(this.getXpGain())
-
-            if (this.xp > 1e275 || isNaN(this.xp) || this.xp == Infinity || this.getXpGain() == Infinity
-                || this.getMaxXp() == Infinity || this.getXpLeft() == Infinity) {
-                this.isFinished = true
-                return
-            }
-
-            if (this.xp >= this.getMaxXp()) {
-                let excess = this.xp - this.getMaxXp()
-
-                let iterations = 0
-                while (excess >= 0) {
-                    iterations += 1
-
-                    if (iterations > 2500)
-                        excess = -1
-
-                    this.level += 1
-                    this.unlocked = true
-                    excess -= this.getMaxXp()
-                }
-                this.xp = this.getMaxXp() + excess
-            }
+        const skills = this.expenseSkills;
+        const tLen = skills.length;
+        for (let i = 0; i < tLen; i++) {
+            expense *= skills[i].getEffect();
         }
-    }
 
-    querySelector(selector, row) {
-        const cachedElement = this.elementsCache[selector]
-
-        if (cachedElement !== undefined)
-            return cachedElement
-
-        const element = row.querySelector(selector)
-        this.elementsCache[selector] = element
-        return element
+        return expense;
     }
 
 }
 
 class Milestone {
+
+    /** @param {MilestoneBaseData} baseData */
     constructor(baseData) {
         this.baseData = baseData
         this.name = baseData.name
@@ -160,125 +166,69 @@ class Milestone {
         this.expense = baseData.expense
         this.description = baseData.description
         this.unlocked = false
-    }
-
-    getTier() { return this.tier }
-}
-
-class Job extends Task {
-    constructor(baseData) {
-        super(baseData)
-        this.incomeMultipliers = []
-    }
-
-    getLevelMultiplier() {
-        return 1 + Math.log10(this.level + 1)
-    }
-
-    getIncome() {
-        const income = (this.isHero ? heroIncomeMult
-            * (this.baseData.heroxp > 78 ? 1e6 : 1)
-            * (this.baseData.heroxp > 130 ? 1e5 : 1)
-            : 1) * applyMultipliers(this.baseData.income, this.incomeMultipliers) * getChallengeBonus("rich_and_the_poor")
-
-        return gameData.active_challenge == "rich_and_the_poor" || gameData.active_challenge == "the_darkest_time" ? Math.pow(income, 0.35) : income
+        this.getEffect = () => { return 1 }
     }
 }
 
-class Skill extends Task {
-    constructor(baseData) {
-        super(baseData)
-    }
+/** 
+* @typedef {Object} CommonRequirementConfig
+ * @property {string} [task]
+ * @property {number} requirement
+ * @property {number} [herequirement]
+*/
 
-    getEffect() {
-        var effect = 1 + this.baseData.effect * (this.isHero ? 1000 * this.level + 8000 : this.level)
-        return effect
-    }
+/** 
+* @typedef {Object} TaskRequirementConfig
+ * @property {string} task
+ * @property {number} requirement
+ * @property {number} [herequirement]
+*/
 
-    getEffectDescription() {
-        return "x" + format(this.getEffect(), 2) + " " + this.baseData.description
-    }
-}
+/**
+ * Union of all valid data configurations that can initialize a Task or its child classes
+ * @typedef {CommonRequirementConfig | TaskRequirementConfig } RequirementConfig
+ */
 
-class Item {
-    constructor(baseData) {
-        this.baseData = baseData
-        this.name = baseData.name
-        this.expenseMultipliers = []
-        this.isHero = false
-        this.unlocked = false
-    }
 
-    getEffect() {
-        let effect = this.baseData.effect
-
-        if (this.isHero) {
-            if (itemCategories["Misc"].includes(this.name))
-            {
-                if (gameData.currentMisc.includes(this)) {
-                    effect *= this.baseData.heroeffect                    
-                    this.unlocked = true
-                }
-            }
-
-            if (itemCategories["Properties"].includes(this.name)) {
-                if (gameData.currentProperty == this) {
-                    effect = this.baseData.heroeffect
-                    this.unlocked = true
-                }
-                else
-                    effect = 1
-            }
-        } else {
-            if (gameData.currentProperty != this && !gameData.currentMisc.includes(this))
-                return 1
-            else
-                this.unlocked = true
-        }
-
-        return effect
-    }
-
-    getEffectDescription() {
-        let description = this.baseData.description
-        let effect = this.baseData.effect
-
-        if (this.isHero) {
-            if (itemCategories["Misc"].includes(this.name)) {
-                effect *= this.baseData.heroeffect
-            }
-
-            if (itemCategories["Properties"].includes(this.name)) {
-                description = "Happiness"
-                effect = this.baseData.heroeffect
-            }
-        }
-        else {
-            if (itemCategories["Properties"].includes(this.name)) description = "Happiness"
-        }
-
-        return "x" + format(effect) + " " + description
-    }
-
-    getExpense(heroic) {
-        if (heroic === undefined)
-            heroic = this.isHero
-        return (heroic ? 4 * Math.pow(10, this.baseData.heromult) * heroIncomeMult : 1)
-            * applyMultipliers(this.baseData.expense, this.expenseMultipliers)
-    }
-}
 
 class Requirement {
+
+    /**
+     * 
+     * @param {string[]} querySelectors 
+     * @param {RequirementConfig[]} requirements 
+     */
     constructor(querySelectors, requirements) {
+
+        /** @type {string[]} */
         this.querySelectors = querySelectors
+
+        /** @type {HTMLElement[]} */
         this.elements = []
+
+        /** @type {RequirementConfig[]} */
         this.requirements = requirements
+
+        /** @type {boolean} */
         this.completed = false
+
+        this.needs_rerender = true
+    }
+
+    /**
+     * Abstract method to be implemented by subclasses.
+     * @param {boolean} isHero 
+     * @param {RequirementConfig} requirement 
+     * @returns {boolean}
+     */
+    getCondition(isHero, requirement) {
+        throw new Error("getCondition() must be implemented by a subclass");
     }
 
     queryElements() {
         this.querySelectors.forEach(querySelector => {
-            this.elements.push(...document.querySelectorAll(querySelector))
+            const nodes = /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll(querySelector));
+            this.elements.push(...nodes);
         })
     }
 
@@ -290,6 +240,7 @@ class Requirement {
             }
         }
         this.completed = true
+        this.needs_rerender = true
         return true
     }
 
@@ -304,26 +255,47 @@ class Requirement {
 }
 
 class TaskRequirement extends Requirement {
+
+    /**
+     * @inheritdoc
+     * @param {string[]} querySelectors
+     * @param {TaskRequirementConfig[]} requirements
+     */
     constructor(querySelectors, requirements) {
         super(querySelectors, requirements)
         this.type = "task"
     }
 
+    /**
+     * @inheritdoc
+     * @param {boolean} isHero
+     * @param { TaskRequirementConfig } requirement
+     */
     getCondition(isHero, requirement) {
-        if (isHero && requirement.herequirement != null)
+        if (isHero && requirement.herequirement)
             return gameData.taskData[requirement.task].level >= requirement.herequirement
-        else if (gameData.taskData[requirement.task].isHero && requirement.isHero)
-            return true
         else
             return gameData.taskData[requirement.task].level >= requirement.requirement
     }
 }
 
 class CoinRequirement extends Requirement {
+    /**
+     * 
+     * @param {string[]} querySelectors 
+     * @param {RequirementConfig[]} requirements 
+     */
     constructor(querySelectors, requirements) {
         super(querySelectors, requirements)
         this.type = "coins"
     }
+
+    /**
+     * 
+     * @param {boolean} isHero 
+     * @param {RequirementConfig} requirement 
+     * @returns {boolean}
+     */
 
     getCondition(isHero, requirement) {
         return gameData.coins >= requirement.requirement
@@ -331,94 +303,165 @@ class CoinRequirement extends Requirement {
 }
 
 class AgeRequirement extends Requirement {
+    /**
+     * @param {string[]} querySelectors
+     * @param {RequirementConfig[]} requirements
+     */
     constructor(querySelectors, requirements) {
         super(querySelectors, requirements)
         this.type = "age"
     }
 
+    /**
+     * @param {boolean} isHero
+     * @param { RequirementConfig } requirement
+     */
     getCondition(isHero, requirement) {
         return daysToYears(gameData.days) >= requirement.requirement
     }
 }
 
 class EvilRequirement extends Requirement {
+    /**
+     * 
+     * @param {string[]} querySelectors 
+     * @param {RequirementConfig[]} requirements 
+     */
     constructor(querySelectors, requirements) {
         super(querySelectors, requirements)
         this.type = "evil"
     }
 
+    /**
+     * @param {boolean} isHero
+     * @param {RequirementConfig} requirement
+     */
     getCondition(isHero, requirement) {
         return gameData.evil >= requirement.requirement
     }
 }
 
 class EssenceRequirement extends Requirement {
+    /**
+     * 
+     * @param {string[]} querySelectors 
+     * @param {RequirementConfig[]} requirements 
+     */
     constructor(querySelectors, requirements) {
         super(querySelectors, requirements)
         this.type = "essence"
     }
 
+    /**
+     * @param {boolean} isHero
+     * @param {RequirementConfig} requirement
+     */
     getCondition(isHero, requirement) {
-        //return gameData.essence >= requirement.requirement
-
-        if (isHero && requirement.herequirement != null)
+        if (isHero && requirement.herequirement)
             return gameData.essence >= requirement.herequirement
         else
             return gameData.essence >= requirement.requirement
-
     }
 }
 
 class DarkMatterRequirement extends Requirement {
+    /**
+    * 
+    * @param {string[]} querySelectors 
+    * @param {RequirementConfig[]} requirements 
+    */
     constructor(querySelectors, requirements) {
         super(querySelectors, requirements)
         this.type = "darkMatter"
     }
 
+    /**
+     * @param {boolean} isHero
+     * @param {RequirementConfig} requirement
+     */
     getCondition(isHero, requirement) {
-        return gameData.dark_matter >= requirement.requirement
+        if (isHero && requirement.herequirement != null)
+            return gameData.dark_matter >= requirement.herequirement
+        else
+            return gameData.dark_matter >= requirement.requirement
     }
 }
 
 class DarkOrbsRequirement extends Requirement {
+    /**
+     * 
+     * @param {string[]} querySelectors 
+     * @param {RequirementConfig[]} requirements 
+     */
     constructor(querySelectors, requirements) {
         super(querySelectors, requirements)
         this.type = "darkOrb"
     }
 
+    /**
+     * @param {boolean} isHero
+     * @param {RequirementConfig} requirement
+     */
     getCondition(isHero, requirement) {
         return gameData.dark_orbs >= requirement.requirement
     }
 }
 
 class MetaverseRequirement extends Requirement {
+    /**
+     * 
+     * @param {string[]} querySelectors 
+     * @param {RequirementConfig[]} requirements 
+     */
     constructor(querySelectors, requirements) {
         super(querySelectors, requirements)
         this.type = "metaverse"
     }
 
+    /**
+     * @param {boolean} isHero
+     * @param {RequirementConfig} requirement
+     */
     getCondition(isHero, requirement) {
         return gameData.rebirthFiveCount >= requirement.requirement
     }
 }
 
 class HypercubeRequirement extends Requirement {
+    /**
+     * 
+     * @param {string[]} querySelectors 
+     * @param {RequirementConfig[]} requirements 
+     */
     constructor(querySelectors, requirements) {
         super(querySelectors, requirements)
         this.type = "hypercube"
     }
 
+    /**
+     * @param {boolean} isHero
+     * @param {RequirementConfig} requirement
+     */
     getCondition(isHero, requirement) {
         return gameData.hypercubes >= requirement.requirement
     }
 }
 
 class PerkPointRequirement extends Requirement {
+    /**
+    * 
+    * @param {string[]} querySelectors 
+    * @param {RequirementConfig[]} requirements 
+    */
     constructor(querySelectors, requirements) {
         super(querySelectors, requirements)
         this.type = "perkpoint"
     }
 
+    /**
+     * @param {boolean} isHero
+     * @param {RequirementConfig} requirement
+     */
     getCondition(isHero, requirement) {
         return gameData.perks_points >= requirement.requirement
     }

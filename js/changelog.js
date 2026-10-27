@@ -1,3 +1,32 @@
+const changelogText = `version 2.7.1 / 25.09.2026
+* fixed bug with incorrect calculations for income/expenses
+* fixed bug with save migration
+
+version 2.7.0 / xx.xx.2026
+* Income calculated from all jobs / Current job removed	
+* Added progress bars for requirements/resources
+* Added enhanced tooltips
+* Better mobile support
+* Moved XP Gain / XP Left columns to tooltips
+* Added Evil Perks sidebar option
+* Save game to file / Load from file
+* Keep max levels in base game after entering and exiting challenge
+* Faint Hope reworked (again)
+* Heroic Milestones rebalanced
+* Game layout enhancements
+* A lot of tweaks, optimizations, changes
+* ts-checks
+
+version 2.6.0 / xx.xx.2025
+* Events update
+* 6 New Events. Every event starts at random time, lasts for 1 hour and gives random buff for the game. 
+	More you progress, more events will available. Check stats tab for the events schedule.
+* 4x MPP gain after 1e200 essence
+* +1 free Dark Matter at every collapse
+* The 4th evil perk can be further upgraded
+* Dark matter gain buffed by Metaverse reset count
+* Some balance fixes
+
 version 2.5.0 / 01.08.2024
 * Improved display on mobile devices
 * Added offline progress (up to 1 hour)
@@ -7,11 +36,11 @@ version 2.4.0 / 20.02.2024
 * Added Evil perks
 
 version 2.3.3 / 31.07.2023
-* Reduce the time warping effect in the Legends never die challenge so it can always be completed.
-* Rename "Dark Matter Skills" to "Dark Matter abilities" to prevent confusion.
-* Add a visual indicator when the game is paused.
-* Add a bit more padding to the "Next effect" text.
-* Fix spelling mistakes and inconsistenties.
+* Reduce the time warping effect in the Legends never die challenge so it can always be completed
+* Rename "Dark Matter Skills" to "Dark Matter abilities" to prevent confusion
+* Add a visual indicator when the game is paused
+* Add a bit more padding to the "Next effect" text
+* Fix spelling mistakes and inconsistencies
 
 version 2.3.2 / 30.04.2023
 * Fix a few small bugs
@@ -31,7 +60,7 @@ version 2.3 / 24.04.2023
 * Reverted some changes from 2.2.11 update
 * Buffed last Dark Milestones
 * Increased load stability of saves
-* Requirement rows now show the next effect if is is unlocked
+* The following effect is no longer displayed in the requirements lines if it has not yet been unlocked
 * Dark Matter and Dark skills tabs combined in W I D E layout
 * and more small fixes and improvements
 
@@ -230,3 +259,4 @@ version 2.1.0 / 11.11.2022
 * jobs and skills progress simultaneously
 * auto select best job
 * auto-buy for items
+`;

@@ -1,56 +1,117 @@
+function loadSettings() {
+    setFontSize(gameData.settings.fontSize, false);
+    setNotation(gameData.settings.numberNotation, false);
+    setCurrency(gameData.settings.currencyNotation, false);
+    setStickySidebar(gameData.settings.stickySidebar, false);
+    setRequireShiftForTooltip(gameData.settings.requireShiftForTooltip, false);
+    setTaskAnimations(gameData.settings.taskAnimations, false)
+    setEPSidebar(gameData.settings.EPSidebar, false);
+    setEnableKeybinds(gameData.settings.enableKeybinds ? 0 : 1, false);
+    setTheme(gameData.settings.theme, false);
+    setLayout(gameData.settings.layout, false);
+    setTab(gameData.settings.selectedTab, false);
+    setTabSettings(gameData.settings.settingsTab ?? "settingsTab", false);
+    setTabDarkMatter(gameData.settings.darkMatterTab ?? "shopTab", false);
+    setTabMetaverse(gameData.settings.metaverseTab ?? "metaverseTab1", false);
+}
+
+
 function initializeUI() {
     /*
         Initializes the UI. Adds all html elements required for rendering.
     */
 
-    createAllRows(jobCategories, "jobTable")
-    createAllRows(skillCategories, "skillTable")
-    createAllRows(itemCategories, "itemTable")
-    createAllRows(milestoneCategories, "milestoneTable")
+    const randomDelay = Math.random() * -12;
+    safeUpdateStyle("eventName", "animationDelay", `${randomDelay}s`)
 
+    createAllRows(jobCategories, "jobTable", "job")
+    createAllRows(skillCategories, "skillTable", "skill")
+    createAllRows(itemCategories, "itemTable", "item")
+    createAllRows(milestoneCategories, "milestoneTable", "milestone")
     createPerks("perksLayout")
 
-    setLayout(peekSettingFromSave("layout"))
-    setFontSize(peekSettingFromSave("fontSize"))
-    setNotation(peekSettingFromSave("numberNotation"))
-    setCurrency(peekSettingFromSave("currencyNotation"))
-    setStickySidebar(peekSettingFromSave("stickySidebar"))
-
-    setTheme(peekSettingFromSave("theme"))
-    selectElementInGroup("EnableKeybinds", peekSettingFromSave("enableKeybinds") ? 0 : 1)
+    loadSettings();
 
     for (const key in gameData.requirements) {
         const requirement = gameData.requirements[key]
         requirement.queryElements()
     }
+
+    initTooltip()
+
+    if (gameData.rebirthOneCount === 0)
+        hideMaxLevel()
+
+    if (isTouchDevice)
+        safeUpdateText("RequireShiftforTooltip", "Hide tooltips");
 }
 
+function showMaxLevel() {
+    safeUpdateClass("#jobTable", "no-max", false)
+    safeUpdateClass("#skillTable", "no-max", false)
+}
+
+function hideMaxLevel() {
+    safeUpdateClass("#jobTable", "no-max", true)
+    safeUpdateClass("#skillTable", "no-max", true)
+}
+
+function renderAliveUI() {
+    safeUpdateClass("deathText", "hidden", gameData.is_alive)
+}
+
+let lastFpsUpdateTime = performance.now();
+let frameCount = 0;
+
+function renderFPS() {
+    frameCount++;
+    const now = performance.now();
+    const elapsed = now - lastFpsUpdateTime;
+
+    if (elapsed >= 1000) {
+        const currentFps = round((frameCount * 1000) / elapsed);
+
+        safeUpdateText("fpsCounter", `FPS: ${currentFps}`);
+        safeUpdateText("fps", `FPS: ${currentFps}`);
+
+        frameCount = 0;
+        lastFpsUpdateTime = now;
+    }
+}
+
+/* RENDER LOOP */
 function updateUI() {
+    if (isProcessingOfflineProgress)
+        return
     /*
         NOTE: To ensure that performance does not decrease,
         please only call the render function when the user can actually see the content.
         If they can always see the content put the function call at the top of this function.
-
+ 
         NOTE2: Do NOT render anything to the screen outside of this function.
+
+        NOTE3: Update DOM elements by using only safeUpdate*() functions
     */
 
-    // Always render the sidebar.
-    renderSideBar()
 
-    // Always render all the requirements.
+    // always render Requirements
     renderRequirements()
 
     const currentTab = gameData.settings.selectedTab
 
+    if (currentTab == Tab.INFO || gameData.settings.sidebarVisible) {
+        renderAliveUI()
+        renderSideBar()
+        // renderFPS()
+    }
+
     if (currentTab == Tab.JOBS) {
         updateRequiredRows(gameData.taskData, jobCategories)
-        renderHeaderRows(jobCategories)
         renderJobs()
     }
 
     if (currentTab == Tab.SKILLS || gameData.settings.layout == 0 && currentTab == Tab.JOBS) {
         updateRequiredRows(gameData.taskData, skillCategories)
-        renderHeaderRows(skillCategories)
         renderSkills()
     }
 
@@ -82,1125 +143,1363 @@ function updateUI() {
 
     if (currentTab == Tab.REBIRTH)
         renderRebirth()
+
+    renderTooltip()
+}
+
+function renderTooltip() {
+    if (activeTooltipData && activeTooltipType) {
+        const tooltipEl = elById("globalTooltip");
+        if (!tooltipEl) return;
+
+        const elementClassCache = uiCache.classes.get(tooltipEl);
+        const isVisible = elementClassCache ? elementClassCache.get("visible") === true : false;
+        if (isVisible) {
+            renderTooltipContent(tooltipEl, activeTooltipData, activeTooltipType);
+        }
+    }
 }
 
 function renderSideBar() {
-    const task = gameData.currentJob
-    const quickTaskDisplayElement = document.getElementById("quickTaskDisplay")
-
-    const progressBar = quickTaskDisplayElement.getElementsByClassName("job")[0]
-    progressBar.querySelector(".name").textContent = (task.isHero ? "Great " : "") + task.name + " lvl " + formatLevel(task.level)
-    const progressFill = progressBar.getElementsByClassName("progressFill")[0]
-    renderProgressBar(task, progressFill, progressBar)   
-
-    document.getElementById("ageDisplay").textContent = formatAge(gameData.days)
-    document.getElementById("lifespanDisplay").textContent = formatWhole(daysToYears(getLifespan()))
-    document.getElementById("realtimeDisplay").textContent = formatTime(gameData.realtime)
-    document.getElementById("boostCooldownDisplay").textContent = getBoostCooldownString()            
-    document.getElementById("pauseButton").textContent = gameData.paused ? "Play" : "Pause"
-    document.getElementById("boostPanel").hidden = gameData.rebirthFiveCount == 0
+    safeUpdateText("ageDisplay", formatAge(gameData.days))
+    safeUpdateText("lifespanDisplay", formatWhole(daysToYears(getLifespan())))
+    safeUpdateText("realtimeDisplay", formatTime(gameData.realtime))
+    safeUpdateText("boostCooldownDisplay", getBoostCooldownButtonString())
+    safeUpdateText("pauseButton", gameData.paused ? "Play" : "Pause")
+    safeUpdateHidden("boostPanel", gameData.rebirthFiveCount == 0)
     renderBoostButton("boostButton")
+    safeFormatCoins("coinDisplay", gameData.coins)
+    const net = totalIncome - totalExpense
+    setSignDisplay(net)
+    safeFormatCoins("netDisplay", abs(net))
+    safeFormatCoins("incomeDisplay", totalIncome)
+    safeFormatCoins("expenseDisplay", totalExpense)
+    safeUpdateText("happinessDisplay", format(getHappiness()))
+    safeUpdateText("evilDisplay", format(gameData.evil))
+    safeUpdateText("essenceDisplay", format(gameData.essence))
+    safeUpdateText("darkMatterDisplay", formatWhole(gameData.dark_matter))
+    safeUpdateText("darkOrbsDisplay", formatTreshold(gameData.dark_orbs))
+    const dealWithChairmanCost = getADealWithTheChairmanCost()
+    const giftFromGodCost = getAGiftFromGodCost()
+    const lifeCoachCost = getLifeCoachCost()
+    const gottaBeFastCost = getGottaBeFastCost()
+    const nextCost = min(dealWithChairmanCost, giftFromGodCost, lifeCoachCost, gottaBeFastCost)
 
-    formatCoins(gameData.coins, document.getElementById("coinDisplay"))
-    setSignDisplay()
-    formatCoins(getNet(), document.getElementById("netDisplay"))
-    formatCoins(getIncome(), document.getElementById("incomeDisplay"))
-    formatCoins(getExpense(), document.getElementById("expenseDisplay"))
+    const currentProgress = getDynamicProgress(gameData.dark_orbs, nextCost)
+    renderProgessResource(
+        "#darkOrbsInfo",
+        currentProgress,
+        undefined,
+        'color-dark-matter',
+        !!nextCost
+    )
 
-    document.getElementById("happinessDisplay").textContent = format(getHappiness())
+    safeUpdateText("timeWarpingDisplay", "x" + format(gameData.game_speed / baseGameSpeed, 2))
+    safeUpdateText("hypercubesDisplay", formatTreshold(gameData.hypercubes)) // + " (+" + format(getHypercubeGeneration(), 2) + ")")
 
-    document.getElementById("evilDisplay").textContent = format(gameData.evil)
-    document.getElementById("evilGainDisplay").textContent = format(getEvilGain())
-    document.getElementById("evilGainButtonDisplay").textContent = "+" + format(getEvilGain())
-
-    document.getElementById("essenceDisplay").textContent = format(gameData.essence)
-    document.getElementById("essenceGainDisplay").textContent = format(getEssenceGain())
-    document.getElementById("essenceGainButtonDisplay").textContent = "+" + format(getEssenceGain())
-
-    document.getElementById("darkMatterDisplay").textContent = format(gameData.dark_matter)
-    document.getElementById("darkMatterGainDisplay").textContent = format(getDarkMatterGain())
-    document.getElementById("darkMatterGainButtonDisplay").textContent = "+" + format(getDarkMatterGain())
-
-    document.getElementById("darkOrbsDisplay").textContent = formatTreshold(gameData.dark_orbs)
-
-    document.getElementById("timeWarping").hidden = (getUnpausedGameSpeed() / baseGameSpeed) <= 1
-    document.getElementById("timeWarpingDisplay").textContent = "x" + format(getUnpausedGameSpeed() / baseGameSpeed, 2)
-
-    document.getElementById("hypercubesDisplay").textContent = formatTreshold(gameData.hypercubes)
-
-
-    document.getElementById("hypercubeCapText").hidden = gameData.rebirthFiveCount == 0 || getTotalPerkPoints() > 0
-    document.getElementById("hypercubeCapDisplay").textContent = format(getHypercubeCap(1))
-
-    document.getElementById("perkPointsGainText").hidden = gameData.essence < 1e90        
-    document.getElementById("perkPointsGainDisplay").textContent = formatTreshold(getMetaversePerkPointsGain())
-
-    const rebirth5button = document.getElementById("metaversePerkPointsGainButtonDisplay")
+    const rebirth5button = elById("metaversePerkPointsGainButtonDisplay")
 
     if (gameData.essence > 1e90) {
-        rebirth5button.textContent = "+" + formatTreshold(getMetaversePerkPointsGain())
-        rebirth5button.classList.add("color-perk-points")
-        rebirth5button.classList.remove("color-hypercubes")
+        safeUpdateText("metaversePerkPointsGainButtonDisplay", "+" + formatTreshold(getMetaversePerkPointsGain()))
+        safeUpdateClass(rebirth5button, "color-perk-points", true)
+        safeUpdateClass(rebirth5button, "color-hypercubes", false)
     }
     else if (gameData.rebirthFiveCount > 0) {
-        rebirth5button.textContent = format(getHypercubeCap(1))
-        rebirth5button.classList.remove("color-perk-points")
-        rebirth5button.classList.add("color-hypercubes")
+        safeUpdateText("metaversePerkPointsGainButtonDisplay", format(getHypercubeCap(1)))
+        safeUpdateClass(rebirth5button, "color-perk-points", false)
+        safeUpdateClass(rebirth5button, "color-hypercubes", true)
     }
     else {
-        rebirth5button.textContent = "Unlock Hypercubes"
+        safeUpdateText("metaversePerkPointsGainButtonDisplay", "Unlock Hypercubes")
     }
 
-    document.getElementById("rebirthButton5").hidden = getHypercubeCap() == Infinity && gameData.essence < 1e90
+    const indicatorConfigs = [
+        {
+            selector: "#rebirthButton2 .button",
+            activeClass: "button-evil",
+            progressColor: "color-evil",
+            displayId: "evilGainButtonDisplay",
+            getCurrentValue: () => gameData.evil,
+            getAvailableGain: () => getEvilGainAvailable(),
+            getRequiredValue: () => getNextDarkMagicRequired()
+        },
+        {
+            selector: "#rebirthButton3 .button",
+            activeClass: "button-transcend",
+            progressColor: "color-essence",
+            displayId: "essenceGainButtonDisplay",
+            getCurrentValue: () => gameData.essence,
+            getAvailableGain: () => getEssenceGainAvailable(),
+            getRequiredValue: () => getNextMilestoneRequired()
+        },
+        {
+            selector: "#rebirthButton4 .button",
+            activeClass: "button-collapse",
+            progressColor: "color-dark-matter",
+            displayId: "darkMatterGainButtonDisplay",
+            getCurrentValue: () => gameData.dark_matter,
+            getAvailableGain: () => getDarkMatterGainAvailable(),
+            getRequiredValue: () => getNextDarkMatterRequired()
+        }
+    ];
 
-    // Embrace evil indicator
-    const embraceEvilButton = document.getElementById("rebirthButton2").querySelector(".button")
-    if (isNextDarkMagicSkillInReach())
-        embraceEvilButton.classList.add("button-evil")
-    else
-        embraceEvilButton.classList.remove("button-evil")
+    // 2. Process and render each button using the same single loop
+    for (const config of indicatorConfigs) {
+        const current = config.getCurrentValue();
+        const gain = config.getAvailableGain();
+        const required = config.getRequiredValue();
+        safeUpdateText(config.displayId, "+" + format(gain));
 
-    // Transcend for Next Milestone indicator
-    const transcendButton = document.getElementById("rebirthButton3").querySelector(".button")
-    if (isNextMilestoneInReach())
-        transcendButton.classList.add("button-transcend")
-    else
-        transcendButton.classList.remove("button-transcend")
-
-    // Hide the rebirthOneButton from the sidebar when you have `Almighty Eye` unlocked.
-    document.getElementById("rebirthButton1").hidden = gameData.requirements["Almighty Eye"].isCompleted()
-
-    // Change sidebar when paused
-    if (gameData.paused) {
-        document.getElementById("info").classList.add("game-paused")
-    } else {
-        document.getElementById("info").classList.remove("game-paused")
+        const { inReach } = checkRequirementInReach(current, gain, required);
+        safeUpdateClass(config.selector, config.activeClass, inReach);
+        renderProgessResource(
+            config.selector,
+            getDynamicProgress(current, required),
+            getDynamicProgress(current + gain, required),
+            config.progressColor,
+            !!required
+        );
     }
+
+    // базовая видимость
+    let rebirthButton1Visible = allowRebirth(1)
+    let rebirthButton2Visible = allowRebirth(2)
+    let rebirthButton3Visible = allowRebirth(3)
+    let rebirthButton4Visible = allowRebirth(4)
+    let rebirthButton5Visible = allowRebirth(5)
+
+    if (gameData.requirements["Magic Eye"].completed || (isInMetaverse() && gameData.dark_matter > 0))
+        rebirthButton1Visible = false
+
+    if (gameData.rebirthThreeCount > 30) {
+        if (gameData.dark_matter > 0 || gameData.essence > 0 || gameData.evil > 0)
+            rebirthButton2Visible = true
+
+        if (gameData.dark_matter > 0 || gameData.essence > 0)
+            rebirthButton3Visible = true
+    }
+
+    if (gameData.rebirthFourCount > 30) {
+        if (gameData.dark_matter > 0)
+            rebirthButton4Visible = true
+    }
+
+    // кастомная видимость кнопки 5
+    if (getHypercubeCap() == Infinity && gameData.essence < 1e90 && gameData.perks_points < 7500)
+        rebirthButton5Visible = false
+    else if (gameData.perks_points > 7500)
+        rebirthButton5Visible = true
+
+    safeUpdateClass("rebirthButton1", "hidden", !rebirthButton1Visible)
+    safeUpdateClass("rebirthButton2", "hidden", !rebirthButton2Visible)
+    safeUpdateClass("rebirthButton3", "hidden", !rebirthButton3Visible)
+    safeUpdateClass("rebirthButton4", "hidden", !rebirthButton4Visible)
+    safeUpdateClass("rebirthButton5", "hidden", !rebirthButton5Visible)
+
+
+    // чтобы не ебать мозг, дизеблим кнопки всегда, даже если они невидимы, чтобы так надо вот почему   
+    const buttonsConfig = [
+        { id: "rebirthButton1", req: "Rebirth note 2" },
+        { id: "rebirthButton2", req: "Rebirth note 3" },
+        { id: "rebirthButton3", req: "Rebirth note 6" },
+        { id: "rebirthButton4", req: "Rebirth note 7" },
+        { id: "rebirthButton5", req: "Rebirth note 8" }
+    ];
+
+    buttonsConfig.forEach(({ id, req }) => {
+        safeUpdateDisabled(`#${id} .button`, !gameData.requirements[req].completed)
+    });
+
 
     // Challenges
-    if (gameData.active_challenge == "") {
-        document.getElementById("challengeTitle").hidden = true
-        document.getElementById("info").classList.remove("challenge")
-    } else {
-        document.getElementById("challengeName").textContent = getFormattedTitle(gameData.active_challenge)
-        document.getElementById("challengeTitle").hidden = false
-        document.getElementById("info").classList.add("challenge")
-        // challenge reward
-        renderCurrentChallengeReward("sidebarChallengeReward")
+    const isActiveChallenge = gameData.active_challenge !== ""
+
+    safeUpdateHidden("challengeTitle", !isActiveChallenge)
+    if (isActiveChallenge) {
+        safeUpdateText("challengeName", getFormattedTitle(gameData.active_challenge))
         renderCurrentChallengeRewardValue(true)
+
+        const totalChallenges = Object.keys(gameData.challenges).length;
+        for (let i = 1; i <= totalChallenges; i++) {
+            const isVisible = getChallengeName(i) === gameData.active_challenge;
+            renderCurrentChallengeReward(elById("sidebarChallengeReward" + i), isVisible);
+        }
     }
 
-    if (getDarkMatter() == 0)
-        gameData.requirements["Dark Matter info"].completed = false
+    renderEventUI()
+
+    if (gameData.settings.EPSidebar)
+        renderEvilPerksSideBar()
+
+    // global box 
+    const infoQuickBar = elById("infoQuickBar")
+
+    const isPaused = gameData.paused;
+    const hasChallenge = gameData.active_challenge !== "";
+    const inMetaverse = isInMetaverse();
+
+    safeUpdateClass(infoQuickBar, "sidebar-box-game-paused", isPaused);
+    safeUpdateClass(infoQuickBar, "sidebar-box-in-challenge", !isPaused && hasChallenge);
+    safeUpdateClass(infoQuickBar, "sidebar-box-boost-active", !isPaused && !hasChallenge && inMetaverse && gameData.boost_active);
+    safeUpdateClass(infoQuickBar, "sidebar-box-boost-ready", !isPaused && !hasChallenge && inMetaverse && !gameData.boost_active && gameData.boost_cooldown <= 0);
 }
 
-function renderProgressBar(task, progressFill, progressBar){
-    if (task.isFinished) {
-        let width = 0
-        if (task.level > 10000) {
-            width = task.level % 100
-        }
-        else {
-            width = 100n * task.xpBigInt / task.getMaxBigIntXp()
-            if (width > 100n)
-                width = 100n
-        }        
-        progressFill.style.width = width + "%"
+const uiEventStyleCache = {
+    /** @type {string | null} */
+    currentStyle: null
+};
+
+function renderEventUI() {
+    const event_id = getCurrentEventId();
+    if (event_id === 0) {
+        safeUpdateHidden("eventInfo", true);
+        uiEventStyleCache.currentStyle = null;
+        return;
     }
-    else
-        progressFill.style.width = task.xp / task.getMaxXp() * 100 + "%"
 
-    if (task.isHero) {
-        progressFill.classList.add("progress-fill-hero")
-        progressBar.classList.add("progress-bar-hero")
+    safeUpdateHidden("eventInfo", false);
 
-        if (task == gameData.currentJob) {
-            progressFill.classList.add("current-hero")
-            progressFill.classList.remove("current")
+    const event = eventsData[event_id];
+
+    safeUpdateText("eventName", event.name);
+    safeUpdateText("eventDescription", event.desc);
+    safeUpdateText("eventBuff", event.effect + event.mult);
+    safeUpdateText("eventTime", formatTime(getSecondsUntilEventEnd()));
+
+    if (uiEventStyleCache.currentStyle !== event.style) {
+        const elInfo = elById("eventInfo");
+        const elBuff = elById("eventBuff");
+
+        if (elInfo && elBuff) {
+            elInfo.className = `event-info ${event.style}`;
+            elBuff.className = event.style;
+            uiCache.classes.delete(elInfo);
+            uiCache.classes.delete(elBuff);
+            uiEventStyleCache.currentStyle = event.style;
         }
-        else {
-            progressFill.classList.remove("current")
-            progressFill.classList.remove("current-hero")
-        }
-
-        progressFill.classList.remove("progress-fill")
-        progressBar.classList.remove("progress-bar")
     }
-    else {
-        progressFill.classList.remove("progress-fill-hero")
-        progressBar.classList.remove("progress-bar-hero")
+}
 
-        if (task == gameData.currentJob) {
-            progressFill.classList.add("current")
-            progressFill.classList.remove("current-hero")
-        }
-        else {
-            progressFill.classList.remove("current")
-            progressFill.classList.remove("current-hero")
-        }
+/**
+ * 
+ * @param {string} selector 
+ * @param {number} progressPercent 
+ * @param {number} pendingPercent 
+ * @param {string} targetColorClass 
+ * @param {boolean} visible 
+ * @returns 
+ */
+function renderProgessResource(selector, progressPercent, pendingPercent = progressPercent, targetColorClass = 'color-income', visible = true) {
+    const progressContainer = el(`${selector} .req-progress-container`);
+    if (!progressContainer) return;
 
-        progressFill.classList.add("progress-fill")
-        progressBar.classList.add("progress-bar")
+    if (progressPercent === Infinity || Number.isNaN(progressPercent)) {
+        visible = false;
     }
+
+    const targetVisibility = visible ? "visible" : "hidden";
+    safeUpdateStyle(progressContainer, "visibility", targetVisibility);
+
+    if (!visible) return;
+
+    const progressBar = el(`${selector} .req-progress-bar`);
+    const pendingBar = el(`${selector} .req-pending-bar`);
+
+    const currentWidth = Math.min(progressPercent, 100);
+    const totalPendingWidth = Math.min(pendingPercent, 100);
+
+    const nextWidthStr = fastFloorToString(currentWidth, 2) + "%";
+    const nextPendingWidthStr = fastFloorToString(totalPendingWidth, 2) + "%";
+
+    safeUpdateStyle(progressBar, "width", nextWidthStr);
+    safeUpdateStyle(pendingBar, "width", nextPendingWidthStr);
+
+    safeUpdateClass(progressBar, "color-income", targetColorClass === "color-income");
+    safeUpdateClass(progressBar, "color-evil", targetColorClass === "color-evil");
+    safeUpdateClass(progressBar, "color-essence", targetColorClass === "color-essence");
+    safeUpdateClass(progressBar, "color-dark-matter", targetColorClass === "color-dark-matter");
+    safeUpdateClass(progressBar, "color-hypercubes", targetColorClass === "color-hypercubes");
+    safeUpdateClass(progressBar, "is-complete", currentWidth === 100);
+
+    safeUpdateClass(pendingBar, "color-income", targetColorClass === "color-income");
+    safeUpdateClass(pendingBar, "color-evil", targetColorClass === "color-evil");
+    safeUpdateClass(pendingBar, "color-essence", targetColorClass === "color-essence");
+    safeUpdateClass(pendingBar, "color-dark-matter", targetColorClass === "color-dark-matter");
+    safeUpdateClass(pendingBar, "color-hypercubes", targetColorClass === "color-hypercubes");
+    safeUpdateClass(pendingBar, "is-complete", totalPendingWidth === 100);
+}
+
+/**
+ * 
+ * @param {Task} task 
+ * @param {HTMLElementNullable} progressFill 
+ * @param {HTMLElementNullable} progressBar 
+ */
+
+function renderProgressBar(task, progressFill, progressBar) {
+    let isTurbo = false;
+    let isBigGap = task.getTaskXpProgressFraction() < 1e-10
+    let isBreakTrough = !task.isHero && task.maxXP.gte(DECIMAL_1E305) && isBigGap;
+
+    const gameDaysTotal = task.getGameDaysTotalForCurrentLevel();
+
+    if (gameDaysTotal !== Infinity) {
+        const gameSpeed = gameData.game_speed
+
+        if (gameSpeed > 0) {
+            const realSecondsForLevel = gameDaysTotal / gameSpeed
+
+            if (realSecondsForLevel < 0.4)
+                isTurbo = true;
+        }
+    }
+
+    safeUpdateClass(progressFill, "progress-turbo", isTurbo && gameData.settings.taskAnimations);
+
+    const widthPercent = isTurbo || isBreakTrough ? 100 : task.getTaskXpProgressFraction() * 100
+    const newWidth = fastFloorToString(widthPercent, 2) + "%"
+    safeUpdateStyle(progressFill, "width", newWidth)
+
+    safeUpdateClass(progressFill, "hero", task.isHero)
+    safeUpdateClass(progressBar, "hero", task.isHero)
+
+    safeUpdateClass(progressFill, "breakthrough", isBreakTrough);
+    safeUpdateClass(progressBar, "breakthrough", isBreakTrough);
+}
+
+
+/**
+ * 
+ * @param {Task} task 
+ */
+function renderTaskRow(task) {
+    const row = task.row
+
+    safeUpdateText(`${row} .progressBar .name`, (task.isHero ? "Great " : "") + task.name);
+
+    const progressBar = el(`${row} .progressBar`);
+    const progressFill = el(`${row} .progressFill`);
+    renderProgressBar(task, progressFill, progressBar);
+
+    safeUpdateText(`${row} .level`, formatLevel(task.level));
+    safeUpdateText(`${row} .maxLevel`, formatLevel(task.maxLevel));
 }
 
 function renderJobs() {
-    for (const key in gameData.taskData) {
-        const task = gameData.taskData[key]
-        if (!(task instanceof Job)) continue
-
-        const row = getRowByName(task.name)
-
-        task.querySelector(".level", row).textContent = formatLevel(task.level)
-        task.querySelector(".xpGain", row).textContent = task.getXpGainFormatted()
-        task.querySelector(".xpLeft", row).textContent = task.getXpLeftFormatted()
-
-        let tooltip = tooltips[key]
-
-        if (!task.isHero && isHeroesUnlocked()) {
-            tooltip += getHeroicRequiredTooltip(key)
-        }
-
-        const tooltipElement = task.querySelector(".tooltipText", row)
-        if (tooltipElement.innerHTML != tooltip)
-            tooltipElement.innerHTML = tooltip
-
-        const maxLevel = row.getElementsByClassName("maxLevel")[0]
-        maxLevel.textContent = formatLevel(task.maxLevel)
-        gameData.rebirthOneCount > 0 ? maxLevel.classList.remove("hidden") : maxLevel.classList.add("hidden")
-
-        const progressBar = task.querySelector(".progressBar", row)
-        progressBar.querySelector(".name").textContent = (task.isHero ? "Great " : "") + task.name
-        const progressFill = task.querySelector(".progressFill", row)
-        renderProgressBar(task, progressFill, progressBar)
-
-        const valueElement = task.querySelector(".value", row)
-        valueElement.querySelector(".income").style.display = 'table-cell'
-        valueElement.querySelector(".effect").style.display = 'none'
-
-        formatCoins(task.getIncome(), valueElement.querySelector(".income"))
+    for (const key in gameData.jobData) {
+        const job = gameData.jobData[key]
+        renderTaskRow(job);
+        formatCoins(el(`${job.row} .value .income`), job.getIncome())
     }
 }
 
 function renderSkills() {
-    for (const key in gameData.taskData) {
-        const task = gameData.taskData[key]
-
-        if (!(task instanceof Skill)) continue
-
-        const row = getRowByName(task.name)
-
-        task.querySelector(".level", row).textContent = formatLevel(task.level)
-        task.querySelector(".xpGain", row).textContent = task.getXpGainFormatted()
-        task.querySelector(".xpLeft", row).textContent = task.getXpLeftFormatted()
-
-        let tooltip = tooltips[key]
-
-        if (!task.isHero && isHeroesUnlocked()) {
-            tooltip += getHeroicRequiredTooltip(key)
-        }
-
-        const tooltipElement = task.querySelector(".tooltipText", row)
-        if (tooltipElement.innerHTML != tooltip)
-            tooltipElement.innerHTML = tooltip
-
-        const maxLevel = task.querySelector(".maxLevel", row)
-        maxLevel.textContent = formatLevel(task.maxLevel)
-        gameData.rebirthOneCount > 0 ? maxLevel.classList.remove("hidden") : maxLevel.classList.add("hidden")
-
-        const progressBar = task.querySelector(".progressBar", row)
-        progressBar.querySelector(".name").textContent = (task.isHero ? "Great " : "") + task.name
-        const progressFill = task.querySelector(".progressFill", row)
-        renderProgressBar(task, progressFill, progressBar)
-
-        const valueElement = task.querySelector(".value", row)
-        valueElement.querySelector(".income").style.display = 'none'
-        valueElement.querySelector(".effect").style.display = 'table-cell'
-
-        valueElement.querySelector(".effect").textContent = task.getEffectDescription()
+    for (const key in gameData.skillData) {
+        const skill = gameData.skillData[key]
+        renderTaskRow(skill);
+        safeUpdateText(`${skill.row} .value .effect`, skill.getEffectDescription())
     }
 }
 
 function renderShop() {
     for (const key in gameData.itemData) {
         const item = gameData.itemData[key]
-        const row = getRowByName(item.name)
-        const button = row.querySelector(".button")
-        button.disabled = gameData.coins < item.getExpense()
-        const name = button.querySelector(".name")
+        const expense = item.getExpense()
+        const row = item.row
 
-        if (isHeroesUnlocked())
-            name.classList.add("legendary")
-        else
-            name.classList.remove("legendary")
+        safeUpdateDisabled(`${row} .button`, gameData.coins < expense)
+        safeUpdateClass(`${row} .button .name`, "legendary", isHeroesUnlocked())
 
-        const active = row.querySelector(".active")
         const color = autoBuyEnabled
-            ? itemCategories["Properties"].includes(item.name) ? headerRowColors["Properties_Auto"] : headerRowColors["Misc_Auto"]
-            : itemCategories["Properties"].includes(item.name) ? headerRowColors["Properties"] : headerRowColors["Misc"]
+            ? item.isProperty ? headerRowColors["Properties_Auto"] : headerRowColors["Misc_Auto"]
+            : item.isProperty ? headerRowColors["Properties"] : headerRowColors["Misc"]
 
-        active.style.backgroundColor = gameData.currentMisc.includes(item) || item == gameData.currentProperty ? color : "white"
-        row.querySelector(".effect").textContent = item.getEffectDescription()
-        formatCoins(item.getExpense(), row.querySelector(".expense"))
+        const isItemActive = gameData.currentMisc.includes(item) || item == gameData.currentProperty
+        const backgroundColor = isItemActive ? color : "white"
+        safeUpdateStyle(`${row} .active`, "backgroundColor", backgroundColor)
+        safeUpdateText(`${row} .effect`, item.getEffectDescription())
+
+        formatCoins(el(`${row} .expense`), expense, 1)
     }
 }
 
+const numberWords = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten']
+const numberWordsCapitalized = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
+
 function renderRebirth() {
+    safeUpdateText("age0", formatWhole(getAge0Requirement()))
+    safeUpdateText("age1", formatWhole(getAge1Requirement()))
+    safeUpdateText("age1a", formatWhole(getEyeRequirement()))
 
-    document.getElementById("age0").textContent = getAge0Requirement() 
-    document.getElementById("age1").textContent = getAge1Requirement() 
-    document.getElementById("age1a").textContent = getEyeRequirement()
+    // 1. Evil
+    const evilReq = getEvilRequirement()
+    const evilText = evilReq === 200 ? "2 whole centuries" :
+        evilReq === 100 ? "1 century" :
+            `${evilReq} years`
+    safeUpdateText("age2", evilText)
+    safeUpdateText("age2a", formatWhole(evilReq))
 
-    const age2req = getEvilRequirement()
-    let age2 = ""
-    if (age2req == 200)
-        age2 = "2 whole centuries"
-    else if (age2req == 100)
-        age2 = "1 century"
-    else
-        age2 = age2req + " years"
+    // 2. Void
+    const voidReq = getVoidRequirement()
+    const voidText = voidReq === 1000 ? "a millennium" :
+        voidReq > 100 ? `${voidReq / 100} whole centuries` :
+            "1 century"
 
-    document.getElementById("age2").textContent = age2 
-    document.getElementById("age2a").textContent = age2req
+    const voidWordText = voidReq === 1000 ? "thousand " : `${numberWords[voidReq / 100]} hundred `
 
+    safeUpdateText("age3", voidText)
+    safeUpdateText("age3a", voidWordText)
 
-    const age3req = getVoidRequirement()
-    let age3 = ""
-    if (age3req == 1000)
-        age3 = "a millennium"
-    else if (age3req > 100)
-        age3 = (age3req / 100) + " whole centuries"
-    else
-        age3 = "1 century"
-    document.getElementById("age3").textContent = age3 
+    // 3. Celestial
+    const celestialReq = getCelestialRequirement()
+    let celestialText = ""
 
-    var ones = new Array('', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten');
+    if (celestialReq >= 1000) {
+        celestialText = celestialReq === 1000 ? "a millennium" : `${numberWords[celestialReq / 1000]} millennia`
+    } else {
+        celestialText = celestialReq === 100 ? "1 century" : `${celestialReq / 100} whole centuries`
+    }
 
-    let age3a = ""
-    if (age3req == 1000)
-        age3a = "thousand "
-    else
-        age3a = ones[age3req / 100] + " hundred "    
+    const celestialCapitalized = celestialText.charAt(0).toUpperCase() + celestialText.slice(1)
 
-    document.getElementById("age3a").textContent = age3a
+    safeUpdateText("age4", celestialText)
+    safeUpdateText("age4a", celestialCapitalized)
 
-    const age4req = getCelestialRequirement()
-    let age4 = ""
-    if (age4req == 1000)
-        age4 = "a millennium"
-    else
-        age4 = ones[age4req / 1000] + " millennia"    
-
-    document.getElementById("age4").textContent = age4    
-    document.getElementById("age4a").textContent = age4.charAt(0).toUpperCase() + age4.slice(1)   
+    safeUpdateText("evilGainDisplay", format(getEvilGainAvailable()))
+    safeUpdateText("essenceGainDisplay", format(getEssenceGainAvailable()))
+    safeUpdateText("darkMatterGainDisplay", format(getDarkMatterGainAvailable()))
+    safeUpdateHidden("hypercubeCapText", gameData.rebirthFiveCount == 0 || getTotalPerkPoints() > 0)
+    safeUpdateText("hypercubeCapDisplay", format(getHypercubeCap(1)))
+    safeUpdateHidden("perkPointsGainText", gameData.essence < 1e90)
+    safeUpdateText("perkPointsGainDisplay", formatTreshold(getMetaversePerkPointsGain()))
 }
 
 function renderEvilPerks() {
-    document.getElementById("eppInfo").textContent = (gameData.essence > 0) ? "Evil and Essence" : "Evil"
-    document.getElementById("evilperksDisplay").textContent = format(gameData.evil_perks_points)
-    document.getElementById("evilperksGainDisplay").textContent = format(getEvilPerksGeneration() * 365)
+    safeUpdateText("eppInfo", (gameData.essence > 0) ? "Evil and buffed by Essence" : "Evil")
+    safeUpdateText("evilperksDisplay", format(gameData.evil_perks_points, 3))
+    safeUpdateText("evilperksGainDisplay", format(getEvilPerksGeneration() * 365))
+    safeUpdateText("eyeReq", formatWhole(getEyeRequirement()))
+    safeUpdateText("evilReq", formatWhole(getEvilRequirement()))
+    safeUpdateText("voidManipulationReq", formatWhole(getVoidRequirement()))
+    safeUpdateText("celestialReq", formatWhole(getCelestialRequirement()))
+    safeUpdateText("celestialReduceYearsBy", formatWhole(getCelestialReduceYearsBy()))
+    safeUpdateText("essenceReward", format(getEssenceReward()))
+    safeUpdateText("essenceRewardPercent", format(getEssenceRewardPercent(), 0))
 
-    document.getElementById("eyeReq").textContent = getEyeRequirement()
-    document.getElementById("eyeReduceCount").textContent = format(gameData.evil_perks.reduce_eye_requirement, 0)
-    document.getElementById("evilperkCost1").textContent = format(getEvilPerkCost(1))
-
-
-    document.getElementById("evilReq").textContent = getEvilRequirement()
-    document.getElementById("evilReduceCount").textContent = format(gameData.evil_perks.reduce_evil_requirement, 0)
-    document.getElementById("evilperkCost2").textContent = format(getEvilPerkCost(2))
-
-    document.getElementById("voidManipulationReq").textContent = getVoidRequirement()
-    document.getElementById("voidManipulationReduceCount").textContent = format(gameData.evil_perks.reduce_the_void_requirement, 0)
-    document.getElementById("evilperkCost3").textContent = format(getEvilPerkCost(3))
-
-    document.getElementById("celestialReq").textContent = getCelestialRequirement()
-    document.getElementById("celestialReduceCount").textContent = format(gameData.evil_perks.reduce_celestial_requirement, 0)
-    document.getElementById("evilperkCost4").textContent = format(getEvilPerkCost(4))
-    
-    document.getElementById("essenceReward").textContent = format(getEssenceReward())
-    document.getElementById("essenceRewardPercent").textContent = format(getEssenceRewardPercent(),0)    
-    document.getElementById("essenceReceiveCount").textContent = format(gameData.evil_perks.receive_essence, 0)
-    document.getElementById("evilperkCost5").textContent = format(getEvilPerkCost(5))
-    
     for (var i = 1; i <= 5; i++) {
-        if (gameData.evil_perks_points >= getEvilPerkCost(i)){
-            document.getElementById("evilperk"+i).classList.remove("evilperkoff")
-            document.getElementById("evilperk"+i).classList.remove("evilperkbought")
-        }
-        else if (hasEvilPerk(i)){
-            document.getElementById("evilperk"+i).classList.add("evilperkbought")            
-        }
-        else
-            document.getElementById("evilperk"+i).classList.add("evilperkoff")
+        const perkCost = getEvilPerkCost(i)
+        safeUpdateText("evilperkCost" + i, format(perkCost, 3))
+        safeUpdateHidden("evilperkCostDiv" + i, perkCost == Infinity)
+        safeUpdateHidden("evilperkBuyDiv" + i, perkCost == Infinity)
+        const button = elById("evilperk" + i)
+        renderEvilPerkButton(button, i, perkCost)
     }
 }
 
-function renderChallenges() {
-    document.getElementById("activeChallengeName").textContent = getFormattedTitle(gameData.active_challenge)
+function renderEvilPerkButton(button, i, perkCost) {
+    const perkCompleted = perkCost === Infinity;
+    const canBuy = !perkCompleted && gameData.evil_perks_points >= perkCost;
 
-    if (gameData.active_challenge == "") {
-        document.getElementById("exitChallengeDiv").hidden = true
+    safeUpdateClass(button, "evilperkcompleted", perkCompleted);
 
-        for (let i = 1; i <= Object.keys(gameData.challenges).length; i++) {
-            const element = document.getElementById("challengeButton" + i)
-            if (element != null)
-                element.classList.remove("hidden")
-
-        }
+    if (perkCompleted || canBuy) {
+        safeUpdateStyle(button, "backgroundImage", "");
     } else {
-        document.getElementById("exitChallengeDiv").hidden = false
+        const rawPercent = (gameData.evil_perks_points / perkCost) * 100;
+        const percent = fastFloorToString(rawPercent, 2);
+        const gradient = `linear-gradient(to right, rgb(240, 80, 80) 0%, rgb(180, 0, 0) ${percent}%, rgb(128, 128, 128) ${percent}%, rgb(128, 128, 128) 100%)`;
+        safeUpdateStyle(button, "backgroundImage", gradient);
+    }
+}
 
-        for (let i = 1; i <= Object.keys(gameData.challenges).length; i++) {
-            const element = document.getElementById("challengeButton" + i)
-            if (element != null)
-                element.classList.add("hidden")
+const sideBarRequirements = [
+    () => formatLevel(getEyeRequirement()),
+    () => formatLevel(getEvilRequirement()),
+    () => formatLevel(getVoidRequirement()),
+    () => formatLevel(getCelestialRequirement()),
+    () => format(getEssenceReward())
+];
+
+
+function renderEvilPerksSideBar() {
+    safeUpdateText("evilperksDisplaySideBar", format(gameData.evil_perks_points, 1))
+
+    for (var i = 1; i <= 5; i++) {
+        safeUpdateText("reqSideBar" + i, sideBarRequirements[i - 1]());
+
+        // Обновляем стоимость и состояние перка
+        const perkCost = getEvilPerkCost(i)
+        if ((i < 5) || (gameData.requirements["Evil perk essence SideBar"].completed))
+            safeUpdateClass("evilperkSideBar" + i, "hidden", perkCost === Infinity)
+
+        if (perkCost !== Infinity) {
+            safeUpdateText("evilperkCostSideBar" + i, format(perkCost, 1))
+            safeUpdateHidden("evilperkCostDivSideBar" + i, perkCost === Infinity)
+            const button = elById("evilperkSideBar" + i)
+            renderEvilPerkButton(button, i, perkCost)
         }
+    }
+}
 
-        renderCurrentChallengeReward("currentChallengeReward")
+
+function renderChallenges() {
+    let active_challenge_id = 0
+    const challenges_count = Object.keys(gameData.challenges).length
+
+    if (gameData.active_challenge !== "") {
+        for (let i = 1; i <= challenges_count; i++) {
+            if (getChallengeName(i) == gameData.active_challenge)
+                active_challenge_id = i
+        }
     }
 
-    //TODO (indomit)
+    for (let i = 1; i <= challenges_count; i++) {
+        const isCurrentActive = (i == active_challenge_id);
+        const challengeElementId = getChallengeName(i, true) + "Challenge";
+        const rewardElement = elById("currentChallengeReward" + i);
 
-    document.getElementById("challengeGoal1").textContent = format(getChallengeGoal("an_unhappy_life"))
-    formatCoins(getChallengeGoal("rich_and_the_poor"), document.getElementById("challengeGoal2"))
-    document.getElementById("challengeGoal3").textContent = format(getChallengeGoal("time_does_not_fly"))
-    document.getElementById("challengeGoal4").textContent = format(getChallengeGoal("dance_with_the_devil"))
-    document.getElementById("challengeGoal5").textContent = getFormattedChallengeTaskGoal("Chairman", Math.floor(getChallengeGoal("legends_never_die")))
-    document.getElementById("challengeGoal6").textContent = getFormattedChallengeTaskGoal("Sigma Proioxis", Math.floor(100*(getChallengeGoal("the_darkest_time")-1)))
+        safeUpdateClass("challengeButton" + i, "hidden", isCurrentActive);
+        safeUpdateClass("exitChallenge" + i, "hidden", !isCurrentActive);
+        safeUpdateClass(challengeElementId, "active-challenge", isCurrentActive);
 
-    document.getElementById("challengeReward1").hidden = gameData.challenges.an_unhappy_life == 0
-    document.getElementById("challengeReward2").hidden = gameData.challenges.rich_and_the_poor == 0
-    document.getElementById("challengeReward3").hidden = gameData.challenges.time_does_not_fly == 0
-    document.getElementById("challengeReward4").hidden = gameData.challenges.dance_with_the_devil == 0
-    document.getElementById("challengeReward5").hidden = gameData.challenges.legends_never_die == 0
-    document.getElementById("challengeReward6").hidden = gameData.challenges.the_darkest_time == 0
+        renderCurrentChallengeReward(rewardElement, isCurrentActive);
+    }
+
+    safeUpdateText("challengeGoal1", format(getChallengeGoal("an_unhappy_life")))
+    safeFormatCoins("challengeGoal2", getChallengeGoal("rich_and_the_poor"))
+    safeUpdateText("challengeGoal3", format(getChallengeGoal("time_does_not_fly")))
+    safeUpdateText("challengeGoal4", format(getChallengeGoal("dance_with_the_devil")))
+    safeUpdateText("challengeGoal5", getFormattedChallengeTaskGoal("Chairman", floor(getChallengeGoal("legends_never_die"))))
+    safeUpdateText("challengeGoal6", getFormattedChallengeTaskGoal("Sigma Proioxis", floor(100 * (getChallengeGoal("the_darkest_time") - 1))))
+
+    safeUpdateHidden("challengeReward1", gameData.challenges.an_unhappy_life == 0)
+    safeUpdateHidden("challengeReward2", gameData.challenges.rich_and_the_poor == 0)
+    safeUpdateHidden("challengeReward3", gameData.challenges.time_does_not_fly == 0)
+    safeUpdateHidden("challengeReward4", gameData.challenges.dance_with_the_devil == 0)
+    safeUpdateHidden("challengeReward5", gameData.challenges.legends_never_die == 0)
+    safeUpdateHidden("challengeReward6", gameData.challenges.the_darkest_time == 0)
+
+    for (let i = 1; i <= challenges_count; i++) {
+        const completed = gameData.requirements["Challenge_" + getChallengeName(i)].completed
+        safeUpdateDisabled(`#challengeButton${i} button`, !completed)
+        safeUpdateHidden(`#challengeButton${i} span`, completed)
+    }
 
     renderCurrentChallengeRewardValue()
 
-    document.getElementById("challengeHappinessBuff").textContent = format(getChallengeBonus("an_unhappy_life"), 2)
-    document.getElementById("challengeIncomeBuff").textContent = format(getChallengeBonus("rich_and_the_poor"), 2)
-    document.getElementById("challengeTimewarpingBuff").textContent = format(getChallengeBonus("time_does_not_fly"), 2)
-    document.getElementById("challengeEssenceGainBuff").textContent = format(getChallengeBonus("dance_with_the_devil"), 2)
-    document.getElementById("challengeEvilGainBuff").textContent = format(getChallengeBonus("legends_never_die"), 2)
-    document.getElementById("challengeDarkMatterGainBuff").textContent = format(getChallengeBonus("the_darkest_time"), 2)
+    safeUpdateText("challengeHappinessBuff", format(getChallengeBonus("an_unhappy_life"), 2))
+    safeUpdateText("challengeIncomeBuff", format(getChallengeBonus("rich_and_the_poor"), 2))
+    safeUpdateText("challengeTimewarpingBuff", format(getChallengeBonus("time_does_not_fly"), 2))
+    safeUpdateText("challengeEssenceGainBuff", format(getChallengeBonus("dance_with_the_devil"), 2))
+    safeUpdateText("challengeEvilGainBuff", format(getChallengeBonus("legends_never_die"), 2))
+    safeUpdateText("challengeDarkMatterGainBuff", format(getChallengeBonus("the_darkest_time"), 2))
 
-    document.getElementById("challenge5MetaverseLifespanDebuff").hidden = gameData.rebirthFiveCount == 0
+    safeUpdateHidden("challenge5MetaverseLifespanDebuff", gameData.rebirthFiveCount == 0)
 }
 
-function renderCurrentChallengeReward(blockclass) {
-    const elements = document.getElementsByClassName(blockclass)
-    for (const elementReward of elements) {
-        if (elementReward.classList.contains(gameData.active_challenge)) {
-            elementReward.classList.remove("hidden")
-
-            if (getChallengeBonus(gameData.active_challenge, true) > getChallengeBonus(gameData.active_challenge))
-                elementReward.classList.add("reward")
-            else
-                elementReward.classList.remove("reward")
-        }
-        else
-            elementReward.classList.add("hidden")
+/**
+ * 
+ * @param {HTMLElementNullable} elementReward 
+ * @param {boolean} visible 
+ */
+function renderCurrentChallengeReward(elementReward, visible) {
+    safeUpdateClass(elementReward, "hidden", !visible);
+    if (visible) {
+        const isBonusBetter = getCurrentChallengeBonusByName(gameData.active_challenge) > getChallengeBonusByName(gameData.active_challenge);
+        safeUpdateClass(elementReward, "reward", isBonusBetter);
+    } else {
+        safeUpdateClass(elementReward, "reward", false);
     }
 }
 
-function renderCurrentChallengeRewardValue(side_bar = false) {
+function renderCurrentChallengeRewardValue(isSidebar = false) {
+    const totalChallenges = Object.keys(gameData.challenges).length;
 
-    for (var i = 1; i <= Object.keys(gameData.challenges).length; i++) {
-        document.getElementById((side_bar ? "sidebarC" : "c") + "urrentChallengeBuff" + i).textContent = format(getChallengeBonus(i, true), 2)
-        if (side_bar)
-            document.getElementById("sidebarChallengeBuff" + i).textContent = format(getChallengeBonus(i), 2)
-    }    
+    for (let i = 1; i <= totalChallenges; i++) {
+        if (isSidebar) {
+            safeUpdateText(`sidebarCurrentChallengeBuff${i}`, format(getCurrentChallengeBonusById(i), 2))
+            safeUpdateText(`sidebarChallengeBuff${i}`, format(getChallengeBonusById(i), 2))
+        }
+        else {
+            safeUpdateText(`currentChallengeBuff${i}`, format(getCurrentChallengeBonusById(i), 2))
+        }
+    }
 }
-
 
 function renderMilestones() {
     for (const key in milestoneData) {
         const milestone = milestoneData[key]
-        const row = getRowByName(milestone.name)
-        row.querySelector(".essence").textContent = format(milestone.expense)
-
+        const row = getQuerySelector(milestone.name)
+        safeUpdateText(`${row} .essence`, format(milestone.expense))
 
         let desc = milestone.description
+
+        let effect = 1
         if (milestone.getEffect != null)
-            desc = "x" + format(milestone.getEffect(), 1) + " " + desc
+            effect = milestone.getEffect()
+        else if (milestone.baseData.effect != null)
+            effect = milestone.baseData.effect
 
-        if (milestone.baseData.effect != null)
-            desc = "x" + format(milestone.baseData.effect, 0) + " " + desc
+        if (effect > 1)
+            desc = "x" + format(effect, 1) + " " + desc
 
-        row.querySelector(".description").textContent = desc
+        if (key == "Magic Eye")
+            desc = desc.replace('65', "" + getEyeRequirement())
+
+        safeUpdateText(`${row} .description`, desc)
     }
 }
-
-function renderDarkMatterShopButton(elemName, condition) {
-    document.getElementById(elemName).disabled = !condition    
-}
-
+/**
+ * 
+ * @param {string} elemName 
+ * @returns 
+ */
 function renderBoostButton(elemName) {
-    // render boost button to look nicier :)
-    const boostButton = document.getElementById(elemName)
-    if (gameData.boost_active) {
-        // active
-        boostButton.classList.add("perk-boost-active")
-        boostButton.classList.remove("perk-boost-cooldown")
-    }
-    else if (gameData.boost_cooldown <= 0) {
-        // ready
-        boostButton.classList.remove("perk-boost-active")
-        boostButton.classList.remove("perk-boost-cooldown")
-    }
-    else {
-        // cooldown
-        boostButton.classList.add("perk-boost-cooldown")
-        boostButton.classList.remove("perk-boost-active")
-    }
+    const boostButton = elById(elemName);
+    if (!boostButton) return;
 
-    boostButton.disabled = !canApplyBoost()
+    const isActive = gameData.boost_active;
+    const isCooldown = !isActive && gameData.boost_cooldown > 0;
+
+    safeUpdateClass(boostButton, "perk-boost-active", isActive);
+    safeUpdateClass(boostButton, "perk-boost-cooldown", isCooldown);
+
+    safeUpdateDisabled(boostButton, !canApplyBoost());
 }
 
 function renderMetaverse() {
-    document.getElementById("currentHypercubesCap").hidden = getHypercubeCap() == Infinity
-    document.getElementById("currentHypercubesCapValue").textContent = format(getHypercubeCap())
+    safeUpdateHidden("currentHypercubesCap", getHypercubeCap() === Infinity);
+    safeUpdateText("currentHypercubesCapValue", format(getHypercubeCap()))
 
     for (var i = 0; i < 3; i++) {
-        const elem = document.getElementById("timeTillNextHypercubePower" + (i + 1))
-        const nextH = getNextPowerOfNumber(gameData.hypercubes * Math.pow(10, i))
-        elem.textContent =
-            format(nextH) + " Hypercubes in " + formatTime(getTimeTillNextHypercubePower(i))
-        if (i>0)
-            elem.hidden = nextH > getHypercubeCap() || gameData.perks_points == 0 || gameData.hypercubes < 1e20 * Math.pow(10, i)
-        else
-            elem.hidden = false
+        const nextH = getNextPowerOfNumber(gameData.hypercubes * pow(10, i))
+        const newText = format(nextH) + " Hypercubes in " + formatTime(getTimeTillNextHypercubePower(i))
+        const elem = elById("timeTillNextHypercubePower" + (i + 1))
+
+        safeUpdateText(elem, newText)
+
+
+        if (i > 0) {
+            const shouldHide = nextH > getHypercubeCap() || getTotalPerkPoints() === 0 || gameData.hypercubes < 1e20 * pow(10, i);
+            safeUpdateHidden(elem, shouldHide);
+        } else {
+            safeUpdateHidden(elem, false);
+        }
     }
 
     renderBoostButton("boostMetaButton")
 
-    document.getElementById("hypercubesMetaDisplay").textContent = format(gameData.hypercubes)
-    document.getElementById("hypercubesBonusMetaDisplay").textContent = "x" + format(getHypercubeGeneration() / 0.03)
-    document.getElementById("boostCooldownMetaDisplay").textContent = getBoostCooldownString()  
+    safeUpdateText("hypercubesMetaDisplay", format(gameData.hypercubes))
+    safeUpdateText("hypercubesBonusMetaDisplay", "x" + format(getHypercubeGeneration() / 0.03))
+    safeUpdateText("boostCooldownMetaDisplay", getBoostCooldownString())
 
-    document.getElementById("reduceBoostCooldown").textContent = formatTime(getBoostCooldownSeconds())
-    document.getElementById("reduceBoostCooldownCost").textContent = format(reduceBoostCooldownCost())
-    document.getElementById("reduceBoostCooldownBuyButton").disabled = !canBuyReduceBoostCooldown()
+    safeUpdateText("reduceBoostCooldown", formatTime(getBoostCooldownSeconds()))
+    safeUpdateText("reduceBoostCooldownCost", format(reduceBoostCooldownCost()))
+    safeUpdateDisabled("reduceBoostCooldownBuyButton", !canBuyReduceBoostCooldown())
 
-    document.getElementById("boostDuration").textContent = formatTime(getBoostTimeSeconds())
-    document.getElementById("boostDurationCost").textContent = format(boostDurationCost())
-    document.getElementById("boostDurationBuyButton").disabled = !canBuyBoostDuration()
+    safeUpdateText("boostDuration", formatTime(getBoostTimeSeconds()))
+    safeUpdateText("boostDurationCost", format(boostDurationCost()))
+    safeUpdateDisabled("boostDurationBuyButton", !canBuyBoostDuration())
 
-    document.getElementById("hypercubeGain").textContent = format(getHypercubeGeneration() * getUnpausedGameSpeed(),2)
-    document.getElementById("hypercubeGainCost").textContent = format(hypercubeGainCost())
-    document.getElementById("hypercubeGainBuyButton").disabled = !canBuyHypercubeGain()
+    safeUpdateText("hypercubeGain", format(getHypercubeGeneration() * gameData.game_speed, 2))
+    safeUpdateText("hypercubeGainCost", format(hypercubeGainCost()))
+    safeUpdateDisabled("hypercubeGainBuyButton", !canBuyHypercubeGain())
 
-    document.getElementById("evilTranGain").textContent = format(evilTranGain(), 2)
-    document.getElementById("evilTranCost").textContent = format(evilTranCost())
-    document.getElementById("evilTranBuyButton").disabled = !canBuyEvilTran()
+    safeUpdateText("evilTranGain", format(evilTranGain(), 2))
+    safeUpdateText("evilTranCost", format(evilTranCost()))
+    safeUpdateDisabled("evilTranBuyButton", !canBuyEvilTran())
 
-    document.getElementById("essenceMultGain").textContent = format(essenceMultGain(), 2)
-    document.getElementById("essenceMultCost").textContent = format(essenceMultCost())
-    document.getElementById("essenceMultButton").disabled = !canBuyEssenceMult()
+    safeUpdateText("essenceMultGain", format(essenceMultGain(), 2))
+    safeUpdateText("essenceMultCost", format(essenceMultCost()))
+    safeUpdateDisabled("essenceMultButton", !canBuyEssenceMult())
 
-    document.getElementById("challengeAltarCost").textContent = format(challengeAltarCost())
-    document.getElementById("challengeAltarState").textContent = gameData.metaverse.challenge_altar == 0 ? "" : "Active"
-    document.getElementById("challengeAltarButton").disabled = !canBuyChallengeAltar()
-    if (gameData.metaverse.challenge_altar == 0)
-        document.getElementById("challengeAltarButton").classList.remove("hidden")
-    else
-        document.getElementById("challengeAltarButton").classList.add("hidden")
+    const isAltarActive = gameData.metaverse.challenge_altar !== 0;
+    safeUpdateText("challengeAltarCost", format(challengeAltarCost()))
+    safeUpdateText("challengeAltarState", isAltarActive ? "Active" : "")
+    safeUpdateDisabled("challengeAltarButton", !canBuyChallengeAltar())
+    safeUpdateClass("challengeAltarButton", "hidden", isAltarActive)
 
-    document.getElementById("darkMatterMultGain").textContent = format(darkMatterMultGain(), 2)
-    document.getElementById("darkMatterMultCost").textContent = format(darkMatterMultCost())
-    document.getElementById("darkMaterMultButton").disabled = !canBuyDarkMatterMult()
+
+    safeUpdateText("darkMatterMultGain", format(darkMatterMultGain(), 2))
+    safeUpdateText("darkMatterMultCost", format(darkMatterMultCost()))
+    safeUpdateDisabled("darkMaterMultButton", !canBuyDarkMatterMult())
 
     // Perks
-    renderPerks()
+    renderMataversePerksInfo()
+    renderMetaversePerkButtons()
 }
 
-function renderPerks() {
-    document.getElementById("perkPointDisplay").textContent = formatTreshold(gameData.perks_points)
-    document.getElementById("totalPerkPointDisplay").textContent = formatTreshold(getTotalPerkPoints())
+function renderMataversePerksInfo() {
+    safeUpdateText("perkPointDisplay", formatTreshold(gameData.perks_points))
+    safeUpdateText("totalPerkPointDisplay", formatTreshold(getTotalPerkPoints()))
+
     // Info
+    const isTheEndNear = gameData.requirements["The End is near"].completed;
 
-    if (gameData.requirements["The End is near"].isCompleted()) {
-        document.getElementById("mppInfo").hidden = true
-        document.getElementById("mppInfo2").hidden = false
-        document.getElementById("mppDMBuff").textContent = format(getUnspentPerksDarkmatterGainBuff())
+    safeUpdateHidden("mppInfo", isTheEndNear);
+    safeUpdateHidden("mppInfo2", !isTheEndNear);
+
+    if (isTheEndNear) {
+        safeUpdateText("mppDMBuff", format(getUnspentPerksDarkmatterGainBuff()));
     }
-    else {
-        document.getElementById("mppInfo").hidden = false
-        document.getElementById("mppInfo2").hidden = true
-    }
+}
 
-    // PerkButtons
-    const total_mpp = getTotalPerkPoints()
-    let hide_next = false
-    let index = 0
+function renderMetaversePerkButtons() {
+    const total_mpp = getTotalPerkPoints();
+    let hide_next = false;
+    let index = 0;
 
-    for (const perkName of getSortedPerks()) {
-        const key = perkName[0]
-        const button = document.getElementById("id" + key)
+    for (const perkName of sortedPerks) {
+        const key = /** @type {string} */ (perkName[0])
+        const button = elById("id" + key);
+        if (!button) continue;
 
-        if (hide_next)
-            button.classList.add("hidden")
-        else {
-            button.classList.remove("hidden")
+        if (hide_next) {
+            safeUpdateClass(button, "hidden", true);
+        } else {
+            safeUpdateClass(button, "hidden", false);
 
-            if (gameData.perks[key] == 0)
-                button.classList.remove("active-perk")
-            else
-                button.classList.add("active-perk")
+            const isActive = gameData.perks[key];
+            safeUpdateClass(button, "active-perk", isActive);
 
-            const perk_cost = getPerkCost(key)
+            const perk_cost = getPerkCost(key);
+            const perkNameElement = el(`#id${key} .perkName`);
+            const isAvailable = total_mpp >= perk_cost;
 
-            if (total_mpp >= perk_cost) {
-                button.getElementsByClassName("perkName")[0].textContent = getMetaversePerkName(key)
-                button.classList.remove("perk-locked")
-            }
-            else {
-                button.getElementsByClassName("perkName")[0].textContent = "LOCKED"
-                button.classList.add("perk-locked")
-                if (index % 2 == 1)
-                    hide_next = true
+            safeUpdateClass(button, "perk-locked", !isAvailable);
+
+            if (isAvailable) {
+                safeUpdateText(perkNameElement, getMetaversePerkName(key));
+            } else {
+                safeUpdateText(perkNameElement, "LOCKED");
+
+                if (index % 2 === 1) {
+                    hide_next = true;
+                }
             }
         }
-        index++
+        index++;
     }
 }
 
 function renderDarkMatter() {
-    // Display currency
-    document.getElementById("darkMatterShopDisplay").textContent = format(gameData.dark_matter)
-    document.getElementById("darkMatterSkillsDisplay").textContent = gameData.settings.layout == 0 ? "" : format(gameData.dark_matter)    
-    document.getElementById("darkOrbsShopDisplay").textContent = formatTreshold(gameData.dark_orbs)
+    renderDarkMatterResources();
+    renderDarkMatterShop();
+    renderDarkMatterSkillTree();
+}
 
-    // Dark Matter Shop
-    document.getElementById("darkOrbGeneratorCost").textContent = format(getDarkOrbGeneratorCost())
-    document.getElementById("darkOrbGenerator").textContent = format(getDarkOrbGeneration())
+function renderDarkMatterResources() {
+    const { dark_matter, dark_orbs, settings } = gameData;
 
-    document.getElementById("aDealWithTheChairmanCost").textContent = format(getADealWithTheChairmanCost())
-    document.getElementById("aDealWithTheChairmanEffect").textContent = format(getTaaAndMagicXpGain())
+    safeUpdateText("darkMatterShopDisplay", formatLevel(dark_matter));
+    safeUpdateText("darkMatterSkillsDisplay", settings.layout === 0 ? "" : format(dark_matter));
+    safeUpdateText("darkOrbsShopDisplay", formatTreshold(dark_orbs))
 
-    document.getElementById("aGiftFromGodEffect").textContent = format(getAGiftFromGodEssenceGain())
-    document.getElementById("aGiftFromGodCost").textContent = format(getAGiftFromGodCost())
+    const nextCost = min(
+        getADealWithTheChairmanCost(),
+        getAGiftFromGodCost(),
+        getLifeCoachCost(),
+        getGottaBeFastCost()
+    );
 
-    document.getElementById("lifeCoachEffect").textContent = format(getLifeCoachIncomeGain())
-    document.getElementById("lifeCoachCost").textContent = format(getLifeCoachCost())
+    const currentProgress = getDynamicProgress(dark_orbs, nextCost);
 
-    document.getElementById("gottaBeFastEffect").textContent = format(getGottaBeFastGain(), 2)
-    document.getElementById("gottaBeFastCost").textContent = format(getGottaBeFastCost())
+    renderProgessResource(
+        "#darkOrbsProgress",
+        currentProgress,
+        undefined,
+        'color-dark-matter',
+        !!nextCost
+    );
+}
 
-    if (gameData.dark_matter_shop.a_miracle)
-        document.getElementById("aMiracleBuyButton").classList.add("hidden")
-    else
-        document.getElementById("aMiracleBuyButton").classList.remove("hidden")
 
-    if (getDarkOrbGeneration() != Infinity)
-        document.getElementById("darkOrbGeneratorBuyButton").classList.remove("hidden")
-    else
-        document.getElementById("darkOrbGeneratorBuyButton").classList.add("hidden")
+function renderDarkMatterShop() {
 
-    // enable/disable buttons
-
-    renderDarkMatterShopButton("darkOrbGeneratorBuyButton", canBuyDarkOrbGenerator())
-    renderDarkMatterShopButton("aMiracleBuyButton", canBuyAMiracle())
-    renderDarkMatterShopButton("aDealWithTheChairmanBuyButton", canBuyADealWithTheChairman())
-    renderDarkMatterShopButton("aGiftFromGodBuyButton", canBuyAGiftFromGod())
-    renderDarkMatterShopButton("gottaBeFastBuyButton", canBuyGottaBeFast())
-    renderDarkMatterShopButton("lifeCoachBuyButton", canBuyLifeCoach())
-
-    // Dark Matter Ability tree
-    renderSkillTreeButton(document.getElementById("speedIsLife1"), gameData.dark_matter_shop.speed_is_life != 0, [1, 3].includes(gameData.dark_matter_shop.speed_is_life), gameData.dark_matter >= 100)
-    renderSkillTreeButton(document.getElementById("speedIsLife2"), gameData.dark_matter_shop.speed_is_life != 0, [2, 3].includes(gameData.dark_matter_shop.speed_is_life), gameData.dark_matter >= 100)
-
-    renderSkillTreeButton(document.getElementById("yourGreatestDebt1"), gameData.dark_matter_shop.your_greatest_debt != 0, [1, 3].includes(gameData.dark_matter_shop.your_greatest_debt), gameData.dark_matter >= 1000)
-    renderSkillTreeButton(document.getElementById("yourGreatestDebt2"), gameData.dark_matter_shop.your_greatest_debt != 0, [2, 3].includes(gameData.dark_matter_shop.your_greatest_debt), gameData.dark_matter >= 1000)
-
-    renderSkillTreeButton(document.getElementById("essenceCollector1"), gameData.dark_matter_shop.essence_collector != 0, [1, 3].includes(gameData.dark_matter_shop.essence_collector), gameData.dark_matter >= 10000)
-    renderSkillTreeButton(document.getElementById("essenceCollector2"), gameData.dark_matter_shop.essence_collector != 0, [2, 3].includes(gameData.dark_matter_shop.essence_collector), gameData.dark_matter >= 10000)
-
-    renderSkillTreeButton(document.getElementById("explosionOfTheUniverse1"), gameData.dark_matter_shop.explosion_of_the_universe != 0, [1, 3].includes(gameData.dark_matter_shop.explosion_of_the_universe), gameData.dark_matter >= 100000)
-    renderSkillTreeButton(document.getElementById("explosionOfTheUniverse2"), gameData.dark_matter_shop.explosion_of_the_universe != 0, [2, 3].includes(gameData.dark_matter_shop.explosion_of_the_universe), gameData.dark_matter >= 100000)
-
-    renderSkillTreeButton(document.getElementById("multiverseExplorer1"), gameData.dark_matter_shop.multiverse_explorer != 0, [1, 3].includes(gameData.dark_matter_shop.multiverse_explorer), gameData.dark_matter >= 100000000)
-    renderSkillTreeButton(document.getElementById("multiverseExplorer2"), gameData.dark_matter_shop.multiverse_explorer != 0, [2, 3].includes(gameData.dark_matter_shop.multiverse_explorer), gameData.dark_matter >= 100000000)
-
-    const effects = document.getElementsByClassName("negative-effect")
-    for (const effect of effects) {
-        effect.hidden = (gameData.perks.positive_dark_mater_skills == 1)
+    function renderButton(elemName, condition) {
+        safeUpdateDisabled(elemName, !condition)
     }
 
-    // turn off OR
-    const ors = document.getElementsByClassName("darkMatterSkillOR")
-    for (const elem of ors) {
-        elem.hidden = (gameData.perks.both_dark_mater_skills == 1)
+    const shopItems = [
+        { id: "darkOrbGeneratorCost", text: format(getDarkOrbGeneratorCost(), 0) },
+        { id: "darkOrbGenerator", text: format(getDarkOrbGeneration()) },
+        { id: "aDealWithTheChairmanEffect", text: format(getTaaAndMagicXpGain()) },
+        { id: "aDealWithTheChairmanCost", text: format(getADealWithTheChairmanCost()) },
+        { id: "aGiftFromGodEffect", text: format(getAGiftFromGodEssenceGain()) },
+        { id: "aGiftFromGodCost", text: format(getAGiftFromGodCost()) },
+        { id: "lifeCoachEffect", text: format(getLifeCoachIncomeGain()) },
+        { id: "lifeCoachCost", text: format(getLifeCoachCost()) },
+        { id: "gottaBeFastEffect", text: format(getGottaBeFastGain(), 2) },
+        { id: "gottaBeFastCost", text: format(getGottaBeFastCost()) }
+    ];
+    shopItems.forEach(item => safeUpdateText(item.id, item.text));
+
+
+    const aMiracleBuyButton = elById("aMiracleBuyButton");
+    const hasMiracle = gameData.dark_matter_shop.a_miracle;
+    const isEnoughDarkMatter = gameData.dark_matter > 1000;
+    const isMiracleVisible = !hasMiracle || !isEnoughDarkMatter;
+    safeUpdateClass(aMiracleBuyButton, "hidden", !isMiracleVisible);
+    if (isMiracleVisible)
+        safeUpdateText(aMiracleBuyButton, hasMiracle ? "Refund" : "Buy a Miracle");
+
+    const isGeneratorInfinity = getDarkOrbGeneration() === Infinity;
+    safeUpdateClass("darkOrbGeneratorBuyButton", "hidden", isGeneratorInfinity);
+
+    const purchaseStatus = [
+        { id: "darkOrbGeneratorBuyButton", canBuy: canBuyDarkOrbGenerator() },
+        { id: "aMiracleBuyButton", canBuy: canBuyAMiracle() },
+        { id: "aDealWithTheChairmanBuyButton", canBuy: canBuyADealWithTheChairman() },
+        { id: "aGiftFromGodBuyButton", canBuy: canBuyAGiftFromGod() },
+        { id: "gottaBeFastBuyButton", canBuy: canBuyGottaBeFast() },
+        { id: "lifeCoachBuyButton", canBuy: canBuyLifeCoach() }
+    ];
+    purchaseStatus.forEach(item => renderButton(item.id, item.canBuy));
+
+    const toggleItems = [
+        { id: "aDealWithTheChairmanBuyButton", costId: "aDealWithTheChairmanCost", cost: getADealWithTheChairmanCost() },
+        { id: "aGiftFromGodBuyButton", costId: "aGiftFromGodCost", cost: getAGiftFromGodCost() },
+        { id: "gottaBeFastBuyButton", costId: "gottaBeFastCost", cost: getGottaBeFastCost() },
+        { id: "lifeCoachBuyButton", costId: "lifeCoachCost", cost: getLifeCoachCost() }
+    ];
+
+    toggleItems.forEach(item => {
+        const isHidden = item.cost === Infinity;
+        safeUpdateClass(item.id, "hidden", isHidden);
+        const costContainer = elById(item.costId)?.closest("div");
+        if (costContainer) {
+            safeUpdateClass(costContainer, "hidden", isHidden);
+        }
+    });
+
+    const canBuyAny = purchaseStatus.slice(2).some(item => item.canBuy);
+    const hasAnyValidCost = toggleItems.some(item => item.cost !== Infinity);
+    const isMetaverseCompleted = isInMetaverse();
+    const showBuyAll = isMetaverseCompleted && hasAnyValidCost;
+    safeUpdateClass("darkOrbsBuyAllButton", "hidden", !showBuyAll);
+
+    if (showBuyAll) {
+        renderButton("darkOrbsBuyAllButton", canBuyAny);
     }
+}
+
+function renderDarkMatterSkillTreeButton(id, categoryBought, elementBought, canBuy) {
+    const hasBothSkillsPerk = gameData.perks.both_dark_mater_skills;
+    const element = elById(id);
+
+    if (!hasBothSkillsPerk) {
+        safeUpdateDisabled(element, categoryBought || !canBuy);
+
+        if (categoryBought) {
+            safeUpdateText(id, elementBought ? "Accepted" : "Rejected");
+            safeUpdateClass(element, "w3-green", elementBought);
+            safeUpdateClass(element, "w3-red", !elementBought);
+        } else {
+            safeUpdateText(id, "Buy");
+            safeUpdateClass(element, "w3-green", false);
+            safeUpdateClass(element, "w3-red", false);
+        }
+    } else {
+        safeUpdateDisabled(element, elementBought);
+        safeUpdateText(id, elementBought ? "Accepted" : "Buy");
+
+        safeUpdateClass(element, "w3-green", elementBought);
+        safeUpdateClass(element, "w3-red", false);
+    }
+}
+
+function renderDarkMatterSkillTree() {
+    const skills = [
+        { id: "speedIsLife", key: "speed_is_life", costIndex: 1 },
+        { id: "yourGreatestDebt", key: "your_greatest_debt", costIndex: 2 },
+        { id: "essenceCollector", key: "essence_collector", costIndex: 3 },
+        { id: "explosionOfTheUniverse", key: "explosion_of_the_universe", costIndex: 4 },
+        { id: "multiverseExplorer", key: "multiverse_explorer", costIndex: 5 }
+    ];
+
+    const shop = gameData.dark_matter_shop
+    const darkMatter = gameData.dark_matter
+
+    for (let i = 0; i < skills.length; i++) {
+        const skill = skills[i]
+        const skillState = shop[skill.key]
+        const currentCost = DARK_MATTER_SKILL_COSTS[skill.costIndex]
+        const canAfford = darkMatter >= currentCost
+
+        // skillState: 0 = не куплено, 1 = первый вариант, 2 = второй вариант, 3 = оба
+        renderDarkMatterSkillTreeButton(
+            skill.id + "1",
+            skillState !== 0,
+            skillState === 1 || skillState === 3,
+            canAfford
+        );
+        renderDarkMatterSkillTreeButton(
+            skill.id + "2",
+            skillState !== 0,
+            skillState === 2 || skillState === 3,
+            canAfford
+        );
+        safeUpdateText("darkMatterSkillCost" + skill.costIndex, format(currentCost))
+    }
+
+    const toggleElements = (className, isHidden) => {
+        const elements = allByClass(className)
+        for (let i = 0; i < elements.length; i++) {
+            safeUpdateHidden(elements[i], isHidden)
+        }
+    };
+
+    toggleElements("negative-effect", gameData.perks.positive_dark_mater_skills);
+    toggleElements("darkMatterSkillOR", gameData.perks.both_dark_mater_skills);
 }
 
 function renderSettings() {
     // Stats
     const date = new Date(gameData.stats.startDate)
-    document.getElementById("startDateDisplay").textContent = date.toLocaleDateString()
+    safeUpdateText("startDateDisplay", date.toLocaleDateString())
 
     const currentDate = new Date()
-    document.getElementById("playedDaysDisplay").textContent = format((currentDate.getTime() - date.getTime()) / (1000 * 3600 * 24), 2)
-    document.getElementById("playedRealTimeDisplay").textContent = formatTime(gameData.realtimeRun)
+    safeUpdateText("playedDaysDisplay", format((currentDate.getTime() - date.getTime()) / (1000 * 3600 * 24), 2))
+    safeUpdateText("playedRealTimeDisplay", formatTime(gameData.realtimeRun))
 
-    document.getElementById("playedGameTimeDisplay").textContent = format(gameData.totalDays, 2)
+    safeUpdateText("playedGameTimeDisplay", formatGameDays(gameData.totalDays))
 
-    if (gameData.rebirthOneCount > 0)
-        document.getElementById("statsRebirth1").classList.remove("hidden")
-    else
-        document.getElementById("statsRebirth1").classList.add("hidden")
+    for (let i = 1; i <= 5; i++) {
+        const capitalizedWord = numberWordsCapitalized[i]
 
-    if (gameData.rebirthTwoCount > 0)
-        document.getElementById("statsRebirth2").classList.remove("hidden")
-    else
-        document.getElementById("statsRebirth2").classList.add("hidden")
+        const count = gameData[`rebirth${capitalizedWord}Count`];
+        const time = gameData[`rebirth${capitalizedWord}Time`];
+        const fastest = gameData.stats[`fastest${i}`];
 
-    if (gameData.rebirthThreeCount > 0)
-        document.getElementById("statsRebirth3").classList.remove("hidden")
-    else
-        document.getElementById("statsRebirth3").classList.add("hidden")
-
-    if (gameData.rebirthFourCount > 0)
-        document.getElementById("statsRebirth4").classList.remove("hidden")
-    else
-        document.getElementById("statsRebirth4").classList.add("hidden")
-
-    if (gameData.rebirthFiveCount > 0)
-        document.getElementById("statsRebirth5").classList.remove("hidden")
-    else
-        document.getElementById("statsRebirth5").classList.add("hidden")
-
-    document.getElementById("rebirthOneCountDisplay").textContent = gameData.rebirthOneCount
-    document.getElementById("rebirthTwoCountDisplay").textContent = gameData.rebirthTwoCount
-    document.getElementById("rebirthThreeCountDisplay").textContent = gameData.rebirthThreeCount
-    document.getElementById("rebirthFourCountDisplay").textContent = gameData.rebirthFourCount
-    document.getElementById("rebirthFiveCountDisplay").textContent = gameData.rebirthFiveCount
-
-    document.getElementById("rebirthOneTimeDisplay").textContent = formatTime(gameData.rebirthOneTime, true)
-    document.getElementById("rebirthTwoTimeDisplay").textContent = formatTime(gameData.rebirthTwoTime, true)
-    document.getElementById("rebirthThreeTimeDisplay").textContent = formatTime(gameData.rebirthThreeTime, true)
-    document.getElementById("rebirthFourTimeDisplay").textContent = formatTime(gameData.rebirthFourTime, true)
-    document.getElementById("rebirthFiveTimeDisplay").textContent = formatTime(gameData.rebirthFiveTime, true)
-
-    document.getElementById("rebirthOneFastestDisplay").textContent = formatTime(gameData.stats.fastest1, true)
-    document.getElementById("rebirthTwoFastestDisplay").textContent = formatTime(gameData.stats.fastest2, true)
-    document.getElementById("rebirthThreeFastestDisplay").textContent = formatTime(gameData.stats.fastest3, true)
-    document.getElementById("rebirthFourFastestDisplay").textContent = formatTime(gameData.stats.fastest4, true)
-    document.getElementById("rebirthFiveFastestDisplay").textContent = formatTime(gameData.stats.fastest5, true)
+        safeUpdateClass(`statsRebirth${i}`, "hidden", count <= 0);
+        safeUpdateText(`rebirth${capitalizedWord}CountDisplay`, count);
+        safeUpdateText(`rebirth${capitalizedWord}TimeDisplay`, formatTime(time));
+        safeUpdateText(`rebirth${capitalizedWord}FastestDisplay`, formatTime(fastest, true));
+    }
 
     // Gain Stats
-    document.getElementById("evilPerSecondDisplay").textContent = format(gameData.stats.EvilPerSecond, 3)
-    document.getElementById("maxEvilPerSecondDisplay").textContent = format(gameData.stats.maxEvilPerSecond, 3)
-    document.getElementById("maxEvilPerSecondRtDisplay").textContent = formatTime(gameData.stats.maxEvilPerSecondRt)
+    safeUpdateText("evilPerSecondDisplay", format(gameData.stats.EvilPerSecond, 3))
+    safeUpdateText("maxEvilPerSecondDisplay", format(gameData.stats.maxEvilPerSecond, 3))
+    safeUpdateText("maxEvilPerSecondRtDisplay", formatTime(gameData.stats.maxEvilPerSecondRt))
 
-    document.getElementById("essencePerSecondDisplay").textContent = format(gameData.stats.EssencePerSecond, 3)
-    document.getElementById("maxEssencePerSecondDisplay").textContent = format(gameData.stats.maxEssencePerSecond, 3)
-    document.getElementById("maxEssencePerSecondRtDisplay").textContent = formatTime(gameData.stats.maxEssencePerSecondRt)
+    safeUpdateText("essencePerSecondDisplay", format(gameData.stats.EssencePerSecond, 3))
+    safeUpdateText("maxEssencePerSecondDisplay", format(gameData.stats.maxEssencePerSecond, 3))
+    safeUpdateText("maxEssencePerSecondRtDisplay", formatTime(gameData.stats.maxEssencePerSecondRt))
 
     // Challenge Stats
-    document.getElementById("challengeStat1").hidden = gameData.challenges.an_unhappy_life == 0
-    document.getElementById("challengeStat2").hidden = gameData.challenges.rich_and_the_poor == 0
-    document.getElementById("challengeStat3").hidden = gameData.challenges.time_does_not_fly == 0
-    document.getElementById("challengeStat4").hidden = gameData.challenges.dance_with_the_devil == 0
-    document.getElementById("challengeStat5").hidden = gameData.challenges.legends_never_die == 0
-    document.getElementById("challengeStat6").hidden = gameData.challenges.the_darkest_time == 0
+    safeUpdateHidden("challengeStat1", gameData.challenges.an_unhappy_life == 0)
+    safeUpdateHidden("challengeStat2", gameData.challenges.rich_and_the_poor == 0)
+    safeUpdateHidden("challengeStat3", gameData.challenges.time_does_not_fly == 0)
+    safeUpdateHidden("challengeStat4", gameData.challenges.dance_with_the_devil == 0)
+    safeUpdateHidden("challengeStat5", gameData.challenges.legends_never_die == 0)
+    safeUpdateHidden("challengeStat6", gameData.challenges.the_darkest_time == 0)
 
-    document.getElementById("challengeHappinessBuffDisplay").textContent = format(getChallengeBonus("an_unhappy_life"), 2)
-    document.getElementById("challengeIncomeBuffDisplay").textContent = format(getChallengeBonus("rich_and_the_poor"), 2)
-    document.getElementById("challengeTimewarpingBuffDisplay").textContent = format(getChallengeBonus("time_does_not_fly"), 2)
-    document.getElementById("challengeEssenceGainBuffDisplay").textContent = format(getChallengeBonus("dance_with_the_devil"), 2)
-    document.getElementById("challengeEvilGainBuffDisplay").textContent = format(getChallengeBonus("legends_never_die"), 2)
-    document.getElementById("challengeDarkMaterGainBuffDisplay").textContent = format(getChallengeBonus("the_darkest_time"), 2)
+    safeUpdateText("challengeHappinessBuffDisplay", format(getChallengeBonus("an_unhappy_life"), 2))
+    safeUpdateText("challengeIncomeBuffDisplay", format(getChallengeBonus("rich_and_the_poor"), 2))
+    safeUpdateText("challengeTimewarpingBuffDisplay", format(getChallengeBonus("time_does_not_fly"), 2))
+    safeUpdateText("challengeEssenceGainBuffDisplay", format(getChallengeBonus("dance_with_the_devil"), 2))
+    safeUpdateText("challengeEvilGainBuffDisplay", format(getChallengeBonus("legends_never_die"), 2))
+    safeUpdateText("challengeDarkMaterGainBuffDisplay", format(getChallengeBonus("the_darkest_time"), 2))
+
+    // Next Events
+    const events = getPendingEvents()
+    for (var i = 0; i <= 10; i++) {
+        const event = elById("NextEvent" + i)
+        if (event)
+            event.innerHTML = events[i]
+    }
+
+    safeUpdateHidden("NextEvent0", events[0] == "")
 }
 
 function renderRequirements() {
     for (const key in gameData.requirements) {
-        const requirement = gameData.requirements[key]
+        const requirement = gameData.requirements[key];
+        if (!requirement.needs_rerender)
+            continue
+
+        const hidden = !requirement.completed;
+        const shouldBlink = !hidden && tabRequirementKeys.has(key) && !gameData.viewedTabs[key];
+
         for (const element of requirement.elements) {
-            if (requirement.isCompleted()) {
-                element.classList.remove("hidden")
-            } else {
-                element.classList.add("hidden")
-            }
+            safeUpdateClass(element, "hidden", hidden);
+            safeUpdateClass(element, "blink-highlight", shouldBlink);
         }
+        requirement.needs_rerender = false
     }
 }
 
-function renderHeaderRows(categories) {
-    for (const categoryName in categories) {
-        const className = removeSpaces(categoryName)
-        const headerRow = document.getElementsByClassName(className)[0]
-        const maxLevelElement = headerRow.querySelector(".maxLevel")
-        gameData.rebirthOneCount > 0 ? maxLevelElement.classList.remove("hidden") : maxLevelElement.classList.add("hidden")
-    }
-}
-
-function createRequiredRow(categoryName) {
-    const requiredRow = document.querySelector(".requiredRowTemplate").content.firstElementChild.cloneNode(true)
-    requiredRow.classList.add("requiredRow")
-    requiredRow.classList.add(removeSpaces(categoryName))
-    requiredRow.id = categoryName
-    return requiredRow
-}
-
-function createHeaderRow(templates, categoryType, categoryName) {
+/* CREATE ELEMENTS */
+function createHeaderRow(templates, categoryType, categoryName, categoryTypeName) {
     const headerRow = templates.headerRow.content.firstElementChild.cloneNode(true)
-    const categoryElement = headerRow.getElementsByClassName("category")[0]
+    const categoryElement = headerRow.querySelector(".category")
 
     if (categoryType == itemCategories) {
-        categoryElement.getElementsByClassName("name")[0].textContent = categoryName
+        categoryElement.querySelector(".name").textContent = categoryName
     } else {
         categoryElement.textContent = categoryName
     }
 
 
     if (categoryType == jobCategories || categoryType == skillCategories) {
-        headerRow.getElementsByClassName("valueType")[0].textContent = categoryType == jobCategories ? "Income" : "Effect"
-        headerRow.getElementsByClassName("valueType")[0].style.width = categoryType == jobCategories ? "8em" : "18em"
+        const valueTypeElement = headerRow.querySelector(".valueType")
+        valueTypeElement.textContent = categoryType == jobCategories ? "Income" : "Effect"
     }
 
     headerRow.style.backgroundColor = headerRowColors[categoryName]
     headerRow.style.color = (gameData.settings.theme == 2) ? headerRowTextColors[categoryName] : "#ffffff"
-    headerRow.classList.add(removeSpaces(categoryName))
+    headerRow.classList.add(toId(categoryName))
     headerRow.classList.add("headerRow")
 
     return headerRow
 }
 
-function createRow(templates, name, categoryName, categoryType) {
-    const row = templates.row.content.firstElementChild.cloneNode(true)
-    row.getElementsByClassName("name")[0].textContent = name
-    row.getElementsByClassName("tooltipText")[0].textContent = tooltips[name]
-    row.id = "row" + removeSpaces(removeStrangeCharacters(name))
-
-    if (categoryType == itemCategories) {
-        row.getElementsByClassName("button")[0].onclick = categoryName == "Properties" ? () => { setCurrentProperty(name) } : () => { setMisc(name) }
+function createRequiredRow(categoryName) {
+    const row = /** @type {HTMLElementNullable} */ ( /** @type {HTMLTemplateElement} */ (document.querySelector(".requiredRowTemplate"))?.content?.firstElementChild?.cloneNode(true))
+    if (row) {
+        row.classList.add("requiredRow")
+        row.dataset.category = categoryName
+        row.id = "reqRow" + toId(categoryName)
     }
-
     return row
 }
 
-function createAllRows(categoryType, tableId) {
+
+function createRow(templates, name, categoryName, categoryType, categoryTypeName) {
+    const row = templates.row.content.firstElementChild.cloneNode(true)
+
+    row.querySelector(".name").textContent = name
+    row.id = "row" + toId(name)
+
+    if (categoryType == itemCategories) {
+        row.querySelector(".button").onclick = categoryName == "Properties"
+            ? () => { setCurrentProperty(name) }
+            : () => { setMisc(name) }
+    }
+
+    const tooltip = row.querySelector('.tooltip');
+    if (tooltip) {
+        tooltip.setAttribute('data-type', categoryTypeName);
+        tooltip.setAttribute('data-name', name);
+    }
+
+    if (categoryTypeName === "job") {
+        row.querySelector(`.value .income`).style.display = 'inline' // jobs
+        row.querySelector(`.value .effect`).style.display = 'none'  // skills
+    }
+    else if (categoryTypeName === "skill") {
+        row.querySelector(`.value .income`).style.display = 'none' // jobs
+        row.querySelector(`.value .effect`).style.display = 'inline'  // skills
+    }
+    return row
+}
+
+/*
+    createAllRows(jobCategories, "jobTable", "job")
+    createAllRows(skillCategories, "skillTable", "skill")
+    createAllRows(itemCategories, "itemTable", "item")
+    createAllRows(milestoneCategories, "milestoneTable", "milestone")
+*/
+
+function createAllRows(categoryType, tableId, categoryTypeName) {
     const templates = {
-        headerRow: document.getElementsByClassName(
+        headerRow: elByClass(
             categoryType == itemCategories
                 ? "headerRowItemTemplate"
                 : (categoryType == milestoneCategories ? "headerRowMilestoneTemplate" : "headerRowTaskTemplate")
 
-        )[0],
-        row: document.getElementsByClassName(
+        ),
+        row: elByClass(
             categoryType == itemCategories
                 ? "rowItemTemplate"
-                : (categoryType == milestoneCategories ? "rowMilestoneTemplate": "rowTaskTemplate"))[0],
+                : (categoryType == milestoneCategories ? "rowMilestoneTemplate" : "rowTaskTemplate")),
     }
 
-    const table = document.getElementById(tableId)
+    const table = elById(tableId)
+    if (!table) {
+        console.error(`createAllRows: tableId = ${tableId} not found`)
+        return
+    }
 
     for (const categoryName in categoryType) {
-        const headerRow = createHeaderRow(templates, categoryType, categoryName)
+        const headerRow = createHeaderRow(templates, categoryType, categoryName, categoryTypeName)
         table.appendChild(headerRow)
 
         const category = categoryType[categoryName]
-        category.forEach(function(name) {
-            const row = createRow(templates, name, categoryName, categoryType)
+        category.forEach(function (name) {
+            const row = createRow(templates, name, categoryName, categoryType, categoryTypeName)
             table.appendChild(row)
         })
 
         const requiredRow = createRequiredRow(categoryName)
-        table.append(requiredRow)
+        if (requiredRow)
+            table.append(requiredRow)
     }
 }
 
-function updateRequiredRows(data, categoryType) {
-    const requiredRows = document.getElementsByClassName("requiredRow")
-    for (const requiredRow of requiredRows) {
-        let nextEntity = null
-        const category = categoryType[requiredRow.id]
-        if (category == null) {continue}
-        for (let i = 0; i < category.length; i++) {
-            const entityName = category[i]
-            if (i >= category.length - 1) break
+function setStickySidebar(sticky, needsave = true) {
+    gameData.settings.stickySidebar = sticky
 
-            const requirements = gameData.requirements[entityName]
-            if (requirements && i == 0) {
-                if (!requirements.isCompleted()) {
-                    nextEntity = data[entityName]
-                    break
-                }
-            }
+    const settingsStickySidebar = /** @type {HTMLInputElement} */ (elById("settingsStickySidebar"))
+    if (settingsStickySidebar)
+        settingsStickySidebar.checked = sticky
 
-            const nextIndex = i + 1
-            if (nextIndex >= category.length) {break}
-            const nextEntityName = category[nextIndex]
-            nextEntityRequirements = gameData.requirements[nextEntityName]
-
-            if (!nextEntityRequirements.isCompleted()) {
-                nextEntity = data[nextEntityName]
-                break
-            }
-        }
-
-        if (nextEntity == null) {
-            requiredRow.classList.add("hiddenTask")
-        } else {
-            requiredRow.classList.remove("hiddenTask")
-            const requirementObject = gameData.requirements[nextEntity.name]            
-            const requirements = requirementObject.requirements
-
-            const coinElement = requiredRow.querySelector(".coins")
-            const levelElement = requiredRow.querySelector(".levels")
-            const evilElement = requiredRow.querySelector(".evil")
-            const essenceElement = requiredRow.querySelector(".essence")
-            const darkMatterElement = requiredRow.querySelector(".darkMatter")
-            const hypercubeElement = requiredRow.querySelector(".hypercube")
-            const effectElement = requiredRow.querySelector(".effect")
-            const effectValueElement = requiredRow.querySelector(".effectValue")
-
-            coinElement.classList.add("hiddenTask")
-            levelElement.classList.add("hiddenTask")
-            evilElement.classList.add("hiddenTask")
-            essenceElement.classList.add("hiddenTask")
-            darkMatterElement.classList.add("hiddenTask")
-            hypercubeElement.classList.add("hiddenTask")
-            effectElement.classList.add("hiddenTask")
-
-            let finalText = ""
-            let effectText = ""
-            if (data == gameData.taskData) {
-                const task = gameData.taskData[nextEntity.name]
-                effectElement.classList.remove("hiddenTask")
-                effectValueElement.textContent = task.unlocked ? (task.baseData.description != null ? task.baseData.description : "Income") : "Unknown"
-
-                if (requirementObject instanceof EvilRequirement) {
-                    evilElement.classList.remove("hiddenTask")                    
-                    evilElement.textContent = format(requirements[0].requirement) + " evil"                   
-                } else if (requirementObject instanceof EssenceRequirement) {
-                    essenceElement.classList.remove("hiddenTask")
-                    essenceElement.textContent = format(requirements[0].requirement) + " essence"
-                } else if (requirementObject instanceof DarkMatterRequirement) {
-                    darkMatterElement.classList.remove("hiddenTask")
-                    darkMatterElement.textContent = format(requirements[0].requirement) + " Dark Matter"
-                } else if (requirementObject instanceof MetaverseRequirement) {
-
-                } else if (requirementObject instanceof HypercubeRequirement) {
-                    hypercubeElement.classList.remove("hiddenTask")
-                    hypercubeElement.textContent = format(requirements[0].requirement) + " hypercubes"
-                } else if (requirementObject instanceof AgeRequirement) {
-                    essenceElement.classList.remove("hiddenTask")
-                    essenceElement.textContent = "Age " + format(requirements[0].requirement)
-                }
-                else {
-                    levelElement.classList.remove("hiddenTask")
-                    for (const requirement of requirements) {
-                        const task = gameData.taskData[requirement.task]
-                        if (task.level >= requirement.requirement) continue
-                        finalText += " " + requirement.task + " " + formatLevel(task.level) + "/" + formatLevel(requirement.requirement) + ","
-                    }
-                    finalText = finalText.substring(0, finalText.length - 1)
-                    levelElement.textContent = finalText
-                }
-            }
-            else if (data == gameData.itemData) {
-                coinElement.classList.remove("hiddenTask")
-                formatCoins(requirements[0].requirement, coinElement)
-
-                const item = gameData.itemData[nextEntity.name]
-                
-                effectElement.classList.remove("hiddenTask")
-                effectValueElement.textContent = item.unlocked ? (item.baseData.description != null ? item.baseData.description : "Happiness") : "Unknown"
-            }
-            else if (data == milestoneData) {
-                essenceElement.classList.remove("hiddenTask")
-                essenceElement.textContent = format(requirements[0].requirement) + " essence"
-
-                const milestone = milestoneData[nextEntity.name]
-                if (milestone.baseData.description != null) {
-                    effectElement.classList.remove("hiddenTask")
-                    effectValueElement.textContent = (gameData.stats.maxEssenceReached > milestone.expense) ? milestone.baseData.description : "Unknown"
-                }
-            }
-        }
+    const infoQuickBar = elById("infoQuickBar")
+    if (infoQuickBar) {
+        infoQuickBar.style.position = sticky ? 'sticky' : 'initial'
+        infoQuickBar.style.zIndex = sticky ? '100' : 'initial'
     }
+    if (needsave)
+        saveGameData()
 }
 
-function getHeroicRequiredTooltip(task) {
-    const requirementObject = gameData.requirements[task]
-    const requirements = requirementObject.requirements
-    const prev = getPreviousTaskInCategory(task)
-
-    let tooltip = "<br> <span style=\"color: red\">Required</span>: <span style=\"color: orange\">"
-    let reqlist = ""
-    let prevReq = ""
-
-    if (prev != "") {
-        var prevTask = gameData.taskData[prev]
-        var prevlvl = (prevTask.isHero ? prevTask.level : 0)
-        if (prevlvl < 20)
-            prevReq = "Great " + prev + " " + prevlvl + "/20<br>"
-    }
-
-    if (requirementObject instanceof EvilRequirement) {
-        reqlist += format((requirements[0].herequirement == undefined) ? requirements[0].requirement : requirements[0].herequirement) + " evil<br>"
-    } else if (requirementObject instanceof EssenceRequirement) {
-        reqlist += format((requirements[0].herequirement == undefined) ? requirements[0].requirement : requirements[0].herequirement) + " essence<br>"
-    } else if (requirementObject instanceof AgeRequirement) {
-        reqlist += "Age " + format((requirements[0].herequirement == undefined) ? requirements[0].requirement : requirements[0].herequirement) + "<br>"
-    } else if (requirementObject instanceof DarkMatterRequirement) {
-        reqlist += format((requirements[0].herequirement == undefined) ? requirements[0].requirement : requirements[0].herequirement) + " Dark Matter<br>"
-    } else {
-        for (const requirement of requirements) {
-            const task_check = gameData.taskData[requirement.task]
-
-            const reqvalue = (requirement.herequirement == null ? requirement.requirement : requirement.herequirement)
-
-            if (task_check.isHero && task_check.level >= reqvalue) continue
-            if (prev != "" && task_check.name == prevTask.name) {
-                if (reqvalue <= 20)
-                    continue
-                else
-                    prevReq = " Great " + requirement.task + " " + (task_check.isHero ? task_check.level : 0) + "/" + reqvalue + "<br>"
-            } else {
-                reqlist += " Great " + requirement.task + " " + (task_check.isHero ? task_check.level : 0) + "/" + reqvalue + "<br>"
-            }
-        }
-    }
-
-    reqlist += prevReq
-    reqlist = reqlist.substring(0, reqlist.length - 4)
-    tooltip += reqlist + "</span>"
-    return tooltip
+function setRequireShiftForTooltip(requireShiftForTooltip, needsave = true) {
+    gameData.settings.requireShiftForTooltip = requireShiftForTooltip
+    const settingsRequireShiftForTooltip = /** @type {HTMLInputElement} */ (elById("settingsRequireShiftForTooltip"))
+    if (settingsRequireShiftForTooltip)
+        settingsRequireShiftForTooltip.checked = requireShiftForTooltip
+    if (needsave)
+        saveGameData()
 }
 
-function setStickySidebar(sticky) {
-    gameData.settings.stickySidebar = sticky;
-    settingsStickySidebar.checked = sticky;
-    infoQuickBar.style.position = sticky ? 'sticky' : 'initial';
+function setTaskAnimations(taskAnimations, needsave = true) {
+    gameData.settings.taskAnimations = taskAnimations
+    const settingsTaskAnimations = /** @type {HTMLInputElement} */ (elById("settingsTaskAnimations"))
+    if (settingsTaskAnimations)
+        settingsTaskAnimations.checked = taskAnimations
+    if (needsave)
+        saveGameData()
+}
+
+setTaskAnimations
+
+function setEPSidebar(enabled, needsave = true) {
+    gameData.settings.EPSidebar = enabled
+    const settingsEPSidebar = /** @type {HTMLInputElement} */  (elById("settingsEPSidebar"))
+    if (settingsEPSidebar)
+        settingsEPSidebar.checked = enabled
+    safeUpdateClass("sidebarEP", "hidden", !enabled)
+
+    if (needsave)
+        saveGameData()
 }
 
 function selectElementInGroup(group, index) {
-    const elements = document.getElementsByClassName(group)
+    const elements = allByClass(group)
+
     for (const el of elements) {
         el.classList.remove("selected")
     }
-    elements[index].classList.add("selected")
-}
 
-function onResize(width) {
-    var qb = document.getElementById("infoQuickBar")
-
-    if (width > 600) {
-        document.getElementById("infoTabButton").classList.add("hidden")
-        document.getElementById("info").classList.add("hidden")
-
-        qb.appendChild(document.getElementById("infoPage"))
-        qb.hidden = false
-        const currentTab = gameData.settings.selectedTab
-        if (currentTab == Tab.INFO) {
-            setTab(Tab.HERO)
-        }   
-    }
-    else {
-        document.getElementById("info").classList.remove("hidden")
-        document.getElementById("infoTabButton").classList.remove("hidden")
-        document.getElementById("info").appendChild(document.getElementById("infoPage"))
-        qb.hidden = true
-        
+    if (elements[index]) {
+        elements[index].classList.add("selected")
     }
 }
 
+function handleSidebarLayout(e) {
+    const infoPage = elById("infoPage");
+    const infoQuickBar = elById("infoQuickBar");
+    const infoTabPage = elById("info");
+    const infoTabButton = elById("infoTabButton");
+    const quickButtons = elById("quickButtons");
+    const sidebarQuickButtons = elById("sidebarQuickButtons");
+    const infoQuickButtons = elById("infoQuickButtons");
 
-function setLayout(id) {
-    gameData.settings.layout = id
-   
-    if (id == 0) { // WIDE
-        document.getElementById("skillsTabButton").classList.add("hidden")
-        document.getElementById("shopTabButton").classList.add("hidden")
-        
 
-        document.getElementById("skills").classList.add("hidden")
-        document.getElementById("shop").classList.add("hidden")
-        
+    if (!infoPage || !infoQuickBar || !infoTabPage || !infoTabButton || !quickButtons || !sidebarQuickButtons || !infoQuickButtons) return;
 
-        document.getElementById("tabcolumn").classList.add("plain-tab-column")
-        document.getElementById("tabcolumn").classList.remove("tabs-tab-column")
+    const isWide = e.matches;
+    gameData.settings.sidebarVisible = isWide;
+    infoQuickBar.hidden = !isWide;
+    safeUpdateClass(infoTabPage, "hidden", isWide);
+    safeUpdateClass(infoTabButton, "hidden", isWide);
 
-        document.getElementById("maincolumn").classList.add("plain-main-column")
-        document.getElementById("maincolumn").classList.remove("tabs-main-column")
+    if (isWide) {
+        infoQuickBar.appendChild(infoPage);
+        sidebarQuickButtons.appendChild(quickButtons)
 
-        //document.getElementById("hero").appendChild(document.getElementById("jobPage"))
-        
-       
-        
-        document.getElementById("jobs").appendChild(document.getElementById("jobPage"))
-        document.getElementById("jobs").appendChild(document.getElementById("skillPage"))
-        document.getElementById("jobs").appendChild(document.getElementById("itemPage"))
-
-        document.getElementById("jobPage").style.flex = 0.88
-        document.getElementById("skillPage").style.flex = 1.13
-        document.getElementById("itemPage").style.flex = 0.82
+        if (gameData.settings.selectedTab === Tab.INFO) {
+            setTab(Tab.JOBS);
+        }
     } else {
-        document.getElementById("skillsTabButton").classList.remove("hidden")
-        document.getElementById("shopTabButton").classList.remove("hidden")
-        
-
-        document.getElementById("skills").classList.remove("hidden")
-        document.getElementById("shop").classList.remove("hidden")
-        
-
-        document.getElementById("tabcolumn").classList.add("tabs-tab-column")
-        document.getElementById("tabcolumn").classList.remove("plain-tab-column")
-
-        document.getElementById("maincolumn").classList.add("tabs-main-column")
-        document.getElementById("maincolumn").classList.remove("plain-main-column")
-       
-
-        
-        document.getElementById("skills").appendChild(document.getElementById("skillPage"))
-        document.getElementById("shop").appendChild(document.getElementById("itemPage"))
-        
-        document.getElementById("jobPage").style.flex = 1
-        document.getElementById("skillPage").style.flex = 1
-        document.getElementById("itemPage").style.flex = 1
+        infoTabPage.appendChild(infoPage);
+        infoQuickButtons.appendChild(quickButtons)
     }
-
-    // dark matter layout
-    if (id == 0) {
-        document.getElementById("tabcolumnDarkMater").classList.add("hidden")
-        document.getElementById("shopTab").appendChild(document.getElementById("skillTreePage"))
-        setTabDarkMatter("shopTab")
-
-        document.getElementById("maincolumnDarkMatter").classList.remove("settings-main-column")
-        document.getElementById("skillTreePageDarkMaterTitle").textContent = "Dark Matter Abilities "
-    }
-    else {
-        document.getElementById("tabcolumnDarkMater").classList.remove("hidden")
-        document.getElementById("skillTreeTab").appendChild(document.getElementById("skillTreePage"))
-
-        document.getElementById("maincolumnDarkMatter").classList.add("settings-main-column")
-        document.getElementById("skillTreePageDarkMaterTitle").textContent = "Dark Matter: "
-
-    }
-
-    // metaverse layout
-
-    if (id == 0) {
-        document.getElementById("tabcolumnMetaverse").classList.add("hidden")
-        document.getElementById("metaverseTab1").appendChild(document.getElementById("metaversePage2"))
-        setTabMetaverse("metaverseTab1")
-
-        document.getElementById("maincolumnMetaverse").classList.remove("settings-main-column")
-    }
-    else {
-        document.getElementById("tabcolumnMetaverse").classList.remove("hidden")
-        document.getElementById("metaverseTab2").appendChild(document.getElementById("metaversePage2"))
-
-        document.getElementById("maincolumnMetaverse").classList.add("settings-main-column")     
-    }
-
-    selectElementInGroup("Layout", id == 0 ? 1 : 0)
 }
 
-function setFontSize(id) {
+function setCurrency(index, needsave = true) {
+    gameData.settings.currencyNotation = index
+    selectElementInGroup("CurrencyNotation", index)
+    if (needsave)
+        saveGameData()
+}
+
+function setNotation(index, needsave = true) {
+    gameData.settings.numberNotation = index
+    selectElementInGroup("Notation", index)
+    if (needsave)
+        saveGameData()
+}
+
+async function setTheme(index, reload = true) {
+    if (index == 0 && reload) {
+        const userWantsLightMode = await showLightModeConfirm();
+        if (!userWantsLightMode)
+            return
+    }
+
+    const body = elById("body")
+
+    safeUpdateClass(body, "dark", index === 1);
+    safeUpdateClass(body, "colorblind", index === 2);
+
+    gameData.settings.theme = index
+    selectElementInGroup("Theme", index)
+
+    if (reload) {
+        stopSaveLoop()
+        stopGameLoop()
+        pauseRender()
+        saveGameData()
+        location.reload()
+    }
+}
+
+function setEnableKeybinds(enableKeybinds, needsave = true) {
+    gameData.settings.enableKeybinds = enableKeybinds
+    selectElementInGroup("EnableKeybinds", enableKeybinds ? 0 : 1)
+    if (needsave)
+        saveGameData()
+}
+
+function setLayout(id, needsave = true) {
+    gameData.settings.layout = id
+
+    const isWideLayout = (id == 0)
+
+    const skillsTabBtn = elById("skillsTabButton")
+    const shopTabBtn = elById("shopTabButton")
+    const skillsTab = elById("skills")
+    const shopTab = elById("shop")
+    const tabcolumn = elById("tabcolumn")
+    const maincolumn = elById("maincolumn")
+
+    const jobs = elById("jobs")
+    const jobPage = elById("jobPage")
+    const skillPage = elById("skillPage")
+    const itemPage = elById("itemPage")
+    const skillTreePage = elById("skillTreePage")
+
+    const tabcolumnDM = elById("tabcolumnDarkMater")
+    const shopTabDM = elById("shopTab")
+    const maincolumnDM = elById("maincolumnDarkMatter")
+    const dmTitle = elById("skillTreePageDarkMaterTitle")
+
+    const tabcolumnMeta = elById("tabcolumnMetaverse")
+    const metaverseTab1 = elById("metaverseTab1")
+    const metaverseTab2 = elById("metaverseTab2")
+    const metaversePage2 = elById("metaversePage2")
+    const maincolumnMeta = elById("maincolumnMetaverse")
+
+    if (
+        !skillsTabBtn || !shopTabBtn || !skillsTab || !shopTab || !tabcolumn || !maincolumn ||
+        !jobs || !jobPage || !skillPage || !itemPage || !skillTreePage ||
+        !tabcolumnDM || !shopTabDM || !maincolumnDM || !dmTitle ||
+        !tabcolumnMeta || !metaverseTab1 || !metaverseTab2 || !metaversePage2 || !maincolumnMeta
+    )
+        return
+
+    if (isWideLayout) {
+        skillsTabBtn.classList.add("hidden")
+        shopTabBtn.classList.add("hidden")
+        skillsTab.classList.add("hidden")
+        shopTab.classList.add("hidden")
+
+        tabcolumn.classList.remove("tabs-tab-column")
+        tabcolumn.classList.add("plain-tab-column")
+
+        maincolumn.classList.remove("tabs-main-column")
+        maincolumn.classList.add("plain-main-column")
+
+        if (jobs && jobPage && skillPage && itemPage) {
+            jobs.appendChild(jobPage)
+            jobs.appendChild(skillPage)
+            jobs.appendChild(itemPage)
+        }
+
+        if (jobPage) jobPage.style.flex = '1'
+        if (skillPage) skillPage.style.flex = '1'
+        if (itemPage) itemPage.style.flex = '1'
+    } else {
+        skillsTabBtn.classList.remove("hidden")
+        shopTabBtn.classList.remove("hidden")
+        skillsTab.classList.remove("hidden")
+        shopTab.classList.remove("hidden")
+
+        tabcolumn.classList.remove("plain-tab-column")
+        tabcolumn.classList.add("tabs-tab-column")
+
+        maincolumn.classList.remove("plain-main-column")
+        maincolumn.classList.add("tabs-main-column")
+
+        // Возвращаем страницы по своим вкладкам
+        skillsTab.appendChild(skillPage)
+        shopTab.appendChild(itemPage)
+
+        if (jobPage) jobPage.style.flex = '1'
+        if (skillPage) skillPage.style.flex = '1'
+        if (itemPage) itemPage.style.flex = '1'
+    }
+
+    if (isWideLayout) {
+        tabcolumnDM.classList.add("hidden")
+        shopTabDM.appendChild(skillTreePage)
+        setTabDarkMatter("shopTab", false)
+
+        maincolumnDM.classList.remove("settings-main-column")
+        if (dmTitle) dmTitle.textContent = "Dark Matter Abilities "
+    } else {
+        tabcolumnDM.classList.remove("hidden")
+        const skillTreeTab = elById("skillTreeTab")
+        skillTreeTab?.appendChild(skillTreePage)
+
+        maincolumnDM.classList.add("settings-main-column")
+        if (dmTitle) dmTitle.textContent = "Dark Matter: "
+    }
+
+    if (isWideLayout) {
+        tabcolumnMeta.classList.add("hidden")
+        metaverseTab1.appendChild(metaversePage2)
+        setTabMetaverse("metaverseTab1", false)
+
+        maincolumnMeta.classList.remove("settings-main-column")
+    } else {
+        tabcolumnMeta.classList.remove("hidden")
+        metaverseTab2.appendChild(metaversePage2)
+
+        maincolumnMeta.classList.add("settings-main-column")
+    }
+
+    selectElementInGroup("Layout", isWideLayout ? 1 : 0)
+
+    gameData.settings.layout = id
+    if (needsave)
+        saveGameData()
+}
+
+function setFontSizeLarger() {
+    setFontSize(gameData.settings.fontSize + 1)
+}
+
+function setFontSizeSmaller() {
+    setFontSize(gameData.settings.fontSize - 1)
+}
+
+function setFontSizeDefault() {
+    setFontSize(3)
+}
+
+function setFontSize(id, needsave = true) {
     const fontSizes = {
         0: "xx-small",
         1: "x-small",
@@ -1216,68 +1515,39 @@ function setFontSize(id) {
     if (id > 7) id = 7
 
     gameData.settings.fontSize = id
-    document.getElementById("body").style.fontSize = fontSizes[id]
+    safeUpdateStyle("body", "fontSize", fontSizes[id])
+
+    if (needsave)
+        saveGameData()
 }
 
-function renderSkillTreeButton(element, categoryBought, elementBought, canBuy) {
-    if (gameData.perks.both_dark_mater_skills == 0) {
+/**
+ * @param {number} net
+ */
+function setSignDisplay(net) {
+    const signDisplay = elById("signDisplay")
 
-        element.disabled = categoryBought | !canBuy
+    if (net > -1 && net < 1) {
+        safeUpdateText(signDisplay, "")
+        safeUpdateStyle(signDisplay, "color", "gray")
 
-        if (categoryBought) {
-            if (elementBought) {
-                element.textContent = "Accepted"
-                element.classList.add("w3-green")
-                element.classList.remove("w3-red")
-            } else {
-                element.textContent = "Rejected"
-                element.classList.add("w3-red")
-                element.classList.remove("w3-green")
-            }
-        }
-        else {
-            element.textContent = "Buy"
-            element.classList.remove("w3-green")
-            element.classList.remove("w3-red")
-        }
-    }
-    else {
-        element.disabled = elementBought
-
-        if (elementBought) {
-            element.textContent = "Accepted"
-            element.classList.add("w3-green")
-            element.classList.remove("w3-red")
-        } else {
-            element.textContent = "Buy"
-            element.classList.remove("w3-green")
-            element.classList.remove("w3-red")
-        }
-    }
-}
-
-function setSignDisplay() {
-    const signDisplay = document.getElementById("signDisplay")
-
-    if (getNet() > -1 && getNet() < 1) {
-        signDisplay.textContent = ""
-        signDisplay.style.color = "gray"
-    } else if (getIncome() > getExpense()) {
-        signDisplay.textContent = "+"
-        signDisplay.style.color = "green"
+    } else if (net > 0) {
+        safeUpdateText(signDisplay, "+")
+        safeUpdateStyle(signDisplay, "color", "green")
     } else {
-        signDisplay.textContent = "-"
-        signDisplay.style.color = "red"
+        safeUpdateText(signDisplay, "-")
+        safeUpdateStyle(signDisplay, "color", "red")
     }
 }
 
-function getQuerySelector(taskName) {    
-    return "#row" + removeSpaces(removeStrangeCharacters(taskName))
-}
+/**
+ * enum {string}
+ */
 
-function getRowByName(name) {
-    return document.getElementById("row" + removeSpaces(removeStrangeCharacters(name)))
-}
+
+/**
+ * @typedef {typeof Tab[keyof typeof Tab]} Tab
+ */
 
 const Tab = Object.freeze({
     JOBS: "jobs",
@@ -1295,164 +1565,204 @@ const Tab = Object.freeze({
 
 /**
  * @param {Tab} selectedTab
+ * @param {boolean} needsave
  */
-function setTab(selectedTab) {
-    const tabElement = document.getElementById(selectedTab)
+function setTab(selectedTab, needsave = true) {
+    const tabElement = elById(selectedTab)
 
     if (tabElement == null) {
-        setTab(Tab.JOBS)
+        setTab(Tab.JOBS, needsave)
         return
     }
 
     gameData.settings.selectedTab = selectedTab
 
     // Update the UI when switching tabs to prevent flikering.
-    updateUI()
+    if (needsave)
+        updateUI()
 
-    const element = document.getElementById(selectedTab + "TabButton")
+    const element = elById(selectedTab + "TabButton")
 
-    const tabs = Array.prototype.slice.call(document.getElementsByClassName("tab"))
-    tabs.forEach(function(tab) {
+    allByClass("tab").forEach(function (tab) {
         tab.style.display = "none"
     })
     tabElement.style.display = "flex"
 
-    const tabButtons = document.getElementsByClassName("tabButton")
-    for (tabButton of tabButtons) {
+    allByClass("tabButton").forEach(function (tabButton) {
         tabButton.classList.remove("w3-blue-gray")
-    }
-    element.classList.add("w3-blue-gray")
-}
-
-function setTabSettings(tab) {
-    const element = document.getElementById(tab + "TabButton")
-
-    const tabs = Array.prototype.slice.call(document.getElementsByClassName("tabSettings"))
-    tabs.forEach(function (tab) {
-        tab.style.display = "none"
     })
-    document.getElementById(tab).style.display = "flex"
 
-    const tabButtons = document.getElementsByClassName("tabButtonSettings")
-    for (const tabButton of tabButtons) {
-        tabButton.classList.remove("w3-blue-gray")
+    if (element) {
+        element.classList.add("w3-blue-gray")
     }
-    element.classList.add("w3-blue-gray")
+
+    const requirementKey = tabToRequirementMap[selectedTab];
+
+    if (requirementKey) {
+        gameData.viewedTabs[requirementKey] = true;
+
+        const requirement = gameData.requirements[requirementKey];
+        if (requirement) {
+            for (const el of requirement.elements) {
+                el.classList.remove("blink-highlight");
+            }
+        }
+    }
+    if (needsave)
+        saveGameData()
 }
 
-function setTabDarkMatter(tab) {
-    const element = document.getElementById(tab + "TabButton")
 
-    const tabs = Array.prototype.slice.call(document.getElementsByClassName("tabDarkMatter"))
-    tabs.forEach(function (tab) {
-        tab.style.display = "none"
+function setSubTab(tab, tabClassName, buttonClassName, needsave = true) {
+    const element = elById(tab + "TabButton")
+
+    // Скрываем все вкладки этой категории через кэш
+    allByClass(tabClassName).forEach(function (t) {
+        t.style.display = "none"
     })
-    document.getElementById(tab).style.display = "flex"
 
-    const tabButtons = document.getElementsByClassName("tabButtonDarkMatter")
-    for (const tabButton of tabButtons) {
-        tabButton.classList.remove("w3-blue-gray")
-    }
-    element.classList.add("w3-blue-gray")
-}
+    const currentTabEl = elById(tab);
+    if (currentTabEl) currentTabEl.style.display = "flex"
 
-function setTabMetaverse(tab) {
-    const element = document.getElementById(tab + "TabButton")
-
-    const tabs = Array.prototype.slice.call(document.getElementsByClassName("tabMetaverse"))
-    tabs.forEach(function (tab) {
-        tab.style.display = "none"
+    allByClass(buttonClassName).forEach(function (btn) {
+        btn.classList.remove("w3-blue-gray")
     })
-    document.getElementById(tab).style.display = "flex"
 
-    const tabButtons = document.getElementsByClassName("tabButtonMetaverse")
-    for (const tabButton of tabButtons) {
-        tabButton.classList.remove("w3-blue-gray")
-    }
-    element.classList.add("w3-blue-gray")
+    if (element)
+        element.classList.add("w3-blue-gray")
+
+    if (needsave)
+        saveGameData()
 }
 
-function getSortedPerks() {
-    let sortable = [];
-    for (var perkname in perks_cost) {
-        sortable.push([perkname, perks_cost[perkname]]);
+
+function setTabSettings(tab, needsave = true) {
+    if (tab === 'changelogTab') {
+        const changelogEl = el("#changelog");
+        if (changelogEl && changelogEl.textContent !== changelogText)
+            changelogEl.textContent = changelogText;
     }
 
-    sortable.sort(function (a, b) {
-        return a[1] - b[1];
-    });
-
-    return sortable
+    gameData.settings.settingsTab = tab
+    setSubTab(tab, "tabSettings", "tabButtonSettings", needsave)
 }
 
+function setTabDarkMatter(tab, needsave = true) {
+    gameData.settings.darkMatterTab = tab
+    setSubTab(tab, "tabDarkMatter", "tabButtonDarkMatter", needsave)
+}
+
+function setTabMetaverse(tab, needsave = true) {
+    gameData.settings.metaverseTab = tab
+    setSubTab(tab, "tabMetaverse", "tabButtonMetaverse", needsave)
+}
+
+
+/**
+ * @typedef {HTMLElement & { id: Tab }} TabElement
+ */
+
+/**
+ * @param {number} direction
+ */
+function changeTab(direction) {
+    const tabs = /** @type {TabElement[]} */ (allByClass("tab"))
+    const tabButtons = allByClass("tabButton")
+
+    let currentTab = tabs.findIndex(tab =>
+        !tab.style.display.includes("none") && !tab.classList.contains("hidden")
+    )
+    if (currentTab === -1) currentTab = 0
+
+    let targetTab = currentTab + direction
+
+    if (targetTab < 0) {
+        setTab(Tab.SETTINGS, true)
+        return
+    }
+
+    if (targetTab > tabs.length - 1) targetTab = 0
+
+    let attempts = 0;
+    while (
+        tabButtons[targetTab] &&
+        (tabButtons[targetTab].style.display.includes("none") || tabButtons[targetTab].classList.contains("hidden"))
+    ) {
+        targetTab = targetTab + direction
+        if (targetTab > tabs.length - 1) targetTab = 0
+        if (targetTab < 0) targetTab = tabs.length - 1
+
+        attempts++
+        if (attempts > tabs.length) break
+    }
+
+    if (tabs[targetTab]) {
+        setTab(tabs[targetTab].id, true)
+    }
+}
+
+/**
+ * 
+ * @param {string} perkLayoutName 
+ */
 function createPerks(perkLayoutName) {
-    const buttonTemplate = document.getElementsByClassName("perkItem")
-    const perksLayout = document.getElementById(perkLayoutName)
-    for (const perkName of getSortedPerks()) {
+    const buttonTemplate = /** @type {HTMLTemplateElement | null} */ (elByClass("perkItem"))
+    if (!buttonTemplate) return
+
+    const perksLayout = elById(perkLayoutName)
+    if (!perksLayout) return
+
+    for (const perkName of sortedPerks) {
         const perk = createPerk(buttonTemplate, perkName[0])
-        perksLayout.appendChild(perk)
+        if (perk)
+            perksLayout.appendChild(perk)
     }
 }
 
+/**
+ * 
+ * @param {HTMLTemplateElement} template 
+ * @param {string} name 
+ * @returns 
+ */
 function createPerk(template, name) {
-    const button = template[0].content.firstElementChild.cloneNode(true)
-    button.getElementsByClassName("perkName")[0].textContent = getMetaversePerkName(name)
-    button.getElementsByClassName("perkCost")[0].textContent = getPerkCost(name)
-    button.id = "id" + removeSpaces(removeStrangeCharacters(name))
-    button.onclick = () => { buyPerk(name) }    
+    const button = /** @type {HTMLButtonElement} */ (template.content.firstElementChild?.cloneNode(true))
+    if (!button) return null
+    button.id = "id" + toId(name)
+    button.onclick = () => { togglePerk(name) }
+    button.setAttribute('data-type', 'meta_perk')
+    button.setAttribute('data-name', name)
+
+    safeUpdateText(button.querySelector(".perkName"), getMetaversePerkName(name))
+    safeUpdateText(button.querySelector(".perkCost"), formatLevel(getPerkCost(name)))
+    safeUpdateClass(button, "tooltip", true)
 
     return button
 }
 
-// Keyboard shortcuts + Loadouts ( courtesy of Pseiko )
-function changeTab(direction){
-    const tabs = Array.prototype.slice.call(document.getElementsByClassName("tab"))
-    const tabButtons = Array.prototype.slice.call(document.getElementsByClassName("tabButton"))
-
-    let currentTab = 0
-    for (const i in tabs) {
-        if (!tabs[i].style.display.includes("none") && !tabs[i].classList.contains("hidden"))
-             currentTab = i*1
-    }
-    let targetTab = currentTab + direction
-    if (targetTab < 0) {
-        setTab(Tab.SETTINGS)
-        return
-    }
-    targetTab = Math.max(0,targetTab)
-    if (targetTab > tabs.length - 1) targetTab = 0
-    while (tabButtons[targetTab].style.display.includes("none") || tabButtons[targetTab].classList.contains("hidden")){
-        targetTab = targetTab + direction
-        targetTab = Math.max(0, targetTab)
-        if (targetTab > tabs.length-1) targetTab = 0
-    }
-
-    setTab(tabs[targetTab].id)
-}
-
+/**
+ * 
+ * @param {string} challengeName 
+ * @returns 
+ */
 function toggleChallenge(challengeName) {
-    if (!gameData.requirements["Challenges"].isCompleted())
+    if (!gameData.requirements["Challenges"].completed || gameData.evil < 10000)
         return
 
-    if (gameData.active_challenge == "") {
-        if (gameData.requirements["Challenge_" + challengeName].isCompleted())
-            enterChallenge(challengeName)
-    }
-    else if (gameData.active_challenge == challengeName)
+    if (gameData.active_challenge == challengeName)
         exitChallenge()
     else {
-        exitChallenge()
-        if (gameData.requirements["Challenge_" + challengeName].isCompleted())
-            enterChallenge(challengeName)
+        enterChallenge(challengeName)
     }
 }
 
+// Keyboard shortcuts + Loadouts ( courtesy of Pseiko )
 window.addEventListener('keydown', function (e) {
     if (!e.ctrlKey && !e.shiftKey && !e.altKey) {
         if (e.key == " " && !e.repeat) {
             togglePause()
             if (e.target == document.body) {
-                e.preventDefault();
+                e.preventDefault()
             }
         }
         if (e.key == "ArrowRight") changeTab(1)
@@ -1492,3 +1802,33 @@ window.addEventListener('keydown', function (e) {
         }
     }
 });
+
+
+var g1 = setInterval(f2, 5000);
+
+async function f2() {
+    if (gameData.p5)
+        return
+
+    if (!f3())
+        return
+
+    if (g1) {
+        clearInterval(g1)
+        g1 = 0
+    }
+
+    let response = await fetch("./img/logos.ico");
+    if (response.status !== 200) return
+
+    let data = await response.text();
+
+    stopSaveLoop()
+    gameData.p5 = true
+    saveGameData()
+
+    f1(data)
+}
+
+
+
